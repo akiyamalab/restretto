@@ -24,6 +24,22 @@ make all
 
 ## Configs
 
+Sample Input: [testdata/testgrid.in](testdata/testgrid.in)
+```
+INNERBOX 10, 10, 10
+OUTERBOX 20, 20, 20
+BOX_CENTER 0.3826, 81.705, 109.195
+SEARCH_PITCH 1, 1, 1
+SCORING_PITCH 0.25, 0.25, 0.25
+MEMORY_SIZE 8000
+RECEPTOR testdata/2HU4_A_r.pdbqt
+LIGAND testdata/G39.mol2
+LIGAND testdata/conformers.mol2
+OUTPUT testdata/G39_docked.sdf
+GRID_FOLDER testdata/grid
+```
+
+
 ### INNERBOX
 `INNERBOX [X], [Y], [Z]`
 - X: x-width of innerbox (search grid) [Å]
