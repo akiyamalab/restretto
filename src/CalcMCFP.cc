@@ -5,7 +5,7 @@ namespace MCFP {
   void LeftBackSSP::initializeFlowNodes() {
     for (int i = 0; i < (int)graph.size(); i++) {
       fnode &fnd = flow_nodes[i];
-      fnd.to = graph[i].to;
+      fnd.to = graph[i].to; // i"から"伸びている辺
       fnd.rev_cap = 0;
       fnd.rev_one_cap = 0;
       if (fnd.to >= 0) {
@@ -99,10 +99,10 @@ namespace MCFP {
     return ret;
   }
 
-  int runLeftBackSSP(const vector<node> &graph, int supply, vector<int>& ret) {
+  int runLeftBackSSP(const vector<node> &graph, int supply, vector<int>& ret) { //supply: メモリに一度に収まるフラグメントグリッドの個数
     LeftBackSSP solver(graph);
-    int c = -solver.run(supply - 1);
-    int sz = graph.size();
+    int c = -solver.run(supply - 1); // IPSJ2018「キャッシュメモリの容量が M のオフラインキャッシュ問題のメモリ戦略の最適化は，このグラフに流量 M−1 のフローを流すことに対応する」なぜこうなるのかまでは引用論文をよく見ないと分からない．
+    int sz = graph.size(); //データセットにおけるフラグメントの総個数(=重複を許す)
     ret.clear();
     ret.resize(sz, -1);
     queue<int> empty;

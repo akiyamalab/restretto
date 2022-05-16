@@ -4,7 +4,7 @@
 #include "utils.hpp"
 
 #include "AtomEnergyGrid.hpp"
-#include "EnergyCalculator.hpp"
+#include "GradientCalculator.hpp"
 #include "log_writer_stream.hpp"
 
 #include <map>
@@ -67,18 +67,21 @@ namespace {
     }
   }
 
-  void makeEnergyGrid(fragdock::AtomEnergyGrid& energy_grid, const fragdock::Molecule& receptor_mol, const fragdock::EnergyCalculator& calc){
+  void makeGradientgrid(std::vector<fragdock::AtomEnergyGrid>& grad_grids, const fragdock::Molecule& receptor_mol, const fragdock::GradientCalculator& gcalc){
     const fragdock::Vector3d temp(0,0,0);
-    fragdock::Atom atom(0, temp, energy_grid.getXSType());
+    fragdock::Atom atom(0, temp, grad_grids[0].getXSType());
 
     // #pragma omp parallel for
-    for(int x=0; x<energy_grid.getNum().x; x++) {
-      for(int y=0; y<energy_grid.getNum().y; y++) {
-        for(int z=0; z<energy_grid.getNum().z; z++) {
+    for(int x=0; x<grad_grids[0].getNum().x; x++) {
+      for(int y=0; y<grad_grids[1].getNum().y; y++) {
+        for(int z=0; z<grad_grids[2].getNum().z; z++) {
           // fragdock::Atom a = atom;
           // fragdock::Molecule mol(std::vector<fragdock::Atom>(1, atom));
-          atom.setPos(energy_grid.convert(x, y, z));
-          energy_grid.setEnergy(x, y, z, calc.getEnergy(atom, receptor_mol));
+          atom.setPos(grad_grids[0].convert(x, y, z));
+          const fragdock::Vector3d grad = gcalc.getGradient(atom, receptor_mol);
+          grad_grids[0].setEnergy(x, y, z, grad.x);
+          grad_grids[1].setEnergy(x, y, z, grad.y);
+          grad_grids[2].setEnergy(x, y, z, grad.z);
         }
       }
     }
@@ -104,7 +107,7 @@ int main(int argc, char **argv){
 
   format::SearchGrid& grid = conf.grid;
 
-  fragdock::EnergyCalculator calc(0.95, 0.0);
+  fragdock::GradientCalculator gcalc(0.95, 0.0);
 
   //Making energyGrid
   for(int xs_type = 0; xs_type < XS_TYPE_SIZE; xs_type++){
@@ -123,13 +126,17 @@ int main(int argc, char **argv){
                                static_cast<int>(ceil(width_z / 2 / pitch.z) + 1e-9) * 2 + 1);
 
     logs::lout << logs::info << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type];
-    fragdock::AtomEnergyGrid energy_grid(center, pitch, num, xs_type);
+    std::vector<fragdock::AtomEnergyGrid> grad_grids(3, fragdock::AtomEnergyGrid(center, pitch, num, xs_type));
     logs::lout << logs::info << "Start calculation of each point. " << xs_strings[xs_type];
-    makeEnergyGrid(energy_grid, receptor_mol, calc);
+    makeGradientgrid(grad_grids, receptor_mol, gcalc);
 
     logs::lout << logs::info << "Make energy grid file. " << xs_strings[xs_type];
-    std::string filename = conf.grid_folder + "/" + xs_strings[xs_type] + ".grid";
-    energy_grid.writeFile(filename);
+    std::string filename_x = conf.grid_folder + "/" + xs_strings[xs_type] + "_gradient_x.grid";
+    std::string filename_y = conf.grid_folder + "/" + xs_strings[xs_type] + "_gradient_y.grid";
+    std::string filename_z = conf.grid_folder + "/" + xs_strings[xs_type] + "_gradient_z.grid";
+    grad_grids[0].writeFile(filename_x);
+    grad_grids[1].writeFile(filename_y);
+    grad_grids[2].writeFile(filename_z);
     logs::lout << logs::info << "Making grid file has done. " << xs_strings[xs_type];
   }
 

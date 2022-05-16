@@ -27,7 +27,7 @@ namespace fragdock {
     Vector3d unit() { fltype ab = this->abs(); return Vector3d(x/ab, y/ab, z/ab); }
     fltype getAngle(const Vector3d &o) const {
       if (this->norm() < 1e-6 || o.norm() < 1e-6) {
-        // std::cerr << "zero vector in Vector3d::getAngle" << std::endl;
+        std::cerr << "zero vector in Vector3d::getAngle" << std::endl;
         return 0;
       }
       return ACOS(dot(o)/sqrt(this->norm()*o.norm()));

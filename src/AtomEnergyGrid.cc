@@ -28,7 +28,7 @@ namespace fragdock {
           for(int z=0; z<energy_grids[i].getNum().z; z++) {
             // fragdock::Atom a = atom;
             // fragdock::Molecule mol(std::vector<fragdock::Atom>(1, atom));
-            atom.setPos(energy_grids[i].convert(x, y, z));
+            atom.setPos(energy_grids[i].convert(x, y, z)); //atomを実際の座標へ移動
             energy_grids[i].setEnergy(x, y, z, ec.getEnergy(atom, receptor_mol));
           }
         }

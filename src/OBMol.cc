@@ -98,7 +98,7 @@ namespace format{
     using namespace fragdock;
     using namespace std;
 
-    OpenBabel::OBMol obmol = original_obmol;
+    OpenBabel::OBMol obmol = original_obmol; //original_obmol: 水素なし
     obmol.SetTitle(mol.gettitle().c_str());
 
     std::vector<int> del_id_list(original_obmol.NumAtoms());

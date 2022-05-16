@@ -35,7 +35,7 @@ namespace fragdock {
     z = (n.z*n.x*A - n.y*C)*ox + (n.y*n.z*A + n.x*C)*oy + (n.z*n.z*A +     B)*oz;
   }
 
-  // zxz rotation
+  // zxz rotation: thetaだけz軸, phiだけx軸, psiだけz軸に対して，この順番で回転 (オイラー角で検索)
   void Vector3d::rotate(fltype theta, fltype phi, fltype psi) {
     const fltype cosT = cos(theta), sinT = sin(theta), cosH = cos(phi), sinH = sin(phi), cosS = cos(psi), sinS = sin(psi);
     fltype ox = x, oy = y, oz = z;

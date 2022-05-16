@@ -23,9 +23,25 @@ namespace format {
     std::string receptor_file, output_file;
     std::string log_file, grid_folder;
     std::string rotangs_file;
-    int reuse_grid = REUSE_OFFLINE;
-    bool reorder = true;
+    int reuse_grid;
+    bool reorder;
     int64_t mem_size;
+
+    std::string fragment_grid_folder;
+    bool f1_selection;
+    bool f2_selection;
+    int64_t top_fgrid_num;
+    fltype per_frag;
+    fltype per_lig;
+    fltype per_conf;
+    fltype thre_frag;
+    fltype thre_lig;
+    fltype thre_conf;
+
+    int64_t max_iterations;
+    fltype step_size;
+
+    
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case REUSE_OFFLINE: return "REUSE_OFFLINE";

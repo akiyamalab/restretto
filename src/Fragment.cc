@@ -13,15 +13,15 @@ namespace fragdock {
     //this->translate(-getCenter());
   }
 
-  void Fragment::settri() {
+  void Fragment::settri() { //一直線上にない3つの原子を単に選んで返すだけ
     tri[0] = tri[1] = tri[2] = -1;
-    if (size() == 1) {
+    if (size() == 1) { //size(): 原子数(Molecule.hppで定義．FragmentクラスはMoleculeクラスを継承している)
       tri[0] = 0;
       return;
     }
 
     // koko ayashii kamo
-    tri[0] = 0;
+    tri[0] = 0; //角度のついた3組が存在しない場合(O=C=Oなど)
     tri[1] = 1;
     for (int i = 0; i < size(); ++i) {
       assert(atoms[i].getId() == i);

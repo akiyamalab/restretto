@@ -7,7 +7,7 @@
 namespace fragdock {
   struct fragvec {
     Vector3d pos;
-    // int rotid;
+    // int rotid; //これをメンバに持っていないのはおそらく最良方向のスコアだけを用いる実装に現在なっているからであり，スコアの候補を増やす場合はリガンドの重心に対するフラグメントの重心(真上にある Vector3d pos)の情報に加えて，さらにその重心に対するフラグメントの回転方向 int rotid の情報が必要になる．
     int fragid; // equal temp_id
     int size;
     int rank;
@@ -40,9 +40,9 @@ namespace fragdock {
       for (auto& fv : vecs)
         fv.setrank(fragrank[fv.fragid]);
 
-      std::sort(vecs.begin(), vecs.end());
+      std::sort(vecs.begin(), vecs.end()); //20行目にfragvecの大小が定義されているのでそれに従ってソートされる．
     }
-    bool operator<(const FragmentsVector& o) const { return vecs < o.vecs; }
+    bool operator<(const FragmentsVector& o) const { return vecs < o.vecs; } //各要素を1つずつ大小比較していき差がついた時点でその差を大小の差と定義する．vector<pll>のソートでもやっていること．a=[2,4,4,11]とb=[2,4,5,9]なら3番目が初めて異なる要素であり4の方が5より小さいのでaが配列全体の大小としてbより小さいと定義される(初めて差がついた時点のみ考えるため，それ以降の要素の大小は関係ない)．vectorに関しての"<"演算子のオーバーロードがデフォルトでなされているからvecs < o.vecs と書くだけで良くなっている．．
   };
 }
 #endif

@@ -122,6 +122,67 @@ namespace format {
       else if (boost::algorithm::starts_with(buffer, "ROTANGS ")) {
         conf.rotangs_file = buffer.substr(8);
       }
+      
+      else if (boost::algorithm::starts_with(buffer, "FRAGMENT_GRID_FOLDER ")) {
+        conf.fragment_grid_folder = buffer.substr(21);
+      }
+      else if (boost::algorithm::starts_with(buffer, "F1_SELECTION ")) {
+        std::string str = buffer.substr(13);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        conf.f1_selection = (str != "false");
+      }
+      else if (boost::algorithm::starts_with(buffer, "F2_SELECTION ")) {
+        std::string str = buffer.substr(13);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        conf.f2_selection = (str != "false");
+      }
+      else if (boost::algorithm::starts_with(buffer, "TOP_FGRID_NUM ")) {
+        std::string str = buffer.substr(14);
+        boost::algorithm::trim(str);
+        conf.top_fgrid_num = boost::lexical_cast<int64_t>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "PERCENT_FRAGMENT ")) {
+        std::string str = buffer.substr(17);
+        boost::algorithm::trim(str);
+        conf.per_frag = boost::lexical_cast<fltype>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "PERCENT_LIGAND ")) {
+        std::string str = buffer.substr(15);
+        boost::algorithm::trim(str);
+        conf.per_lig = boost::lexical_cast<fltype>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "PERCENT_CONFORMER ")) {
+        std::string str = buffer.substr(18);
+        boost::algorithm::trim(str);
+        conf.per_conf = boost::lexical_cast<fltype>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "THRESH_FRAGMENT ")) {
+        std::string str = buffer.substr(16);
+        boost::algorithm::trim(str);
+        conf.thre_frag = boost::lexical_cast<fltype>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "THRESH_LIGAND ")) {
+        std::string str = buffer.substr(14);
+        boost::algorithm::trim(str);
+        conf.thre_lig = boost::lexical_cast<fltype>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "THRESH_CONFORMER ")) {
+        std::string str = buffer.substr(17);
+        boost::algorithm::trim(str);
+        conf.thre_conf = boost::lexical_cast<fltype>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "MAX_ITERATIONS ")) {
+        std::string str = buffer.substr(15);
+        boost::algorithm::trim(str);
+        conf.max_iterations = boost::lexical_cast<int64_t>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "STEP_SIZE ")) {
+        std::string str = buffer.substr(10);
+        boost::algorithm::trim(str);
+        conf.step_size = boost::lexical_cast<fltype>(str);
+      }
     }
     return conf;
   }

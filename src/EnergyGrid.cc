@@ -2,7 +2,7 @@
 // #define TRILINEAR
 
 namespace fragdock {
-  fltype EnergyGrid::getEnergy(int x, int y, int z) const {
+  fltype EnergyGrid::getEnergy(int x, int y, int z) const { //(配列上における)インデックスが与えられた場合(必ず格子点)．フラグメントグリッドのアクセス方法．
     if (x < 0 or y < 0 or z < 0 or x >= num.x or y >= num.y or z >= num.z) return LIMIT_ENERGY;
     // x = max(0, min(x, num.x - 1));
     // y = max(0, min(y, num.y - 1));
@@ -10,7 +10,7 @@ namespace fragdock {
     return grid[(x*num.y+y)*num.z+z];
   }
 
-  fltype EnergyGrid::getEnergy(const Vector3d &pos) const {
+  fltype EnergyGrid::getEnergy(const Vector3d &pos) const { //(配列上における)インデックスではなく具体的な座標が与えられた場合(格子点上とは限らない)．原子グリッドのアクセス方法(ただデフォルトでは，54行目にあるように近傍の座標の配列上におけるインデックスを実引数として5行目を呼んでいるので，結局はフラグメントグリッドと値の取得の仕方は同じ)．
     fltype energy = 0.0;
 
 #ifdef TRILINEAR
@@ -18,7 +18,7 @@ namespace fragdock {
 			 (pos.y-center.y)/pitch.y + (num.y-1)/2,
 			 (pos.z-center.z)/pitch.z + (num.z-1)/2);
 
-    //trilinear interpolation
+    //trilinear interpolation トリリニア補間．単に近くの格子点に近似したりするといった近似よりもしっかりとした近似(IPSJ 2015)
     int x = floor(real.x);
     if(x < 0) x = 0;
     else if(x >= num.x-1) x = num.x-2;
@@ -50,8 +50,8 @@ namespace fragdock {
     energy += getEnergy(x    , y    , z + 1) * revf_x * revf_y * frac_z;
     energy += getEnergy(x    , y    , z    ) * revf_x * revf_y * revf_z;
 #endif
-#ifndef TRILINEAR
-    energy = getEnergy(convertX(pos), convertY(pos), convertZ(pos));
+#ifndef TRILINEAR //デフォルトはこちら．トリリニア補間でない場合．if"n"def に注意．
+    energy = getEnergy(convertX(pos), convertY(pos), convertZ(pos)); //これは単に近くの格子点一つに近似してそこのスコアを返す．
 #endif
     return energy;
   }

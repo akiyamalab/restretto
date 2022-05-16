@@ -27,7 +27,7 @@ namespace fragdock {
     std::string title, smiles, identifier;
     fltype intraEnergy;
   public:
-    std::vector<std::vector<int> > bond_ids;
+    std::vector<std::vector<int> > bond_ids; //結合箇所を辺とみなしたグラフ?
     Molecule(): heavy_num(-1) {}
     Molecule(const std::vector<Atom> &atoms, const std::string title, const std::string smiles);
     // void calcRadius();

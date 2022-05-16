@@ -33,7 +33,8 @@ OBABELLP = -L$(OBABEL_INSTALL_PATH)/lib
 .SUFFIXES: .cc .o
 
 _GRID_OBJS = grid_main.o log_writer.o utils.o infile_reader.o Molecule.o Vector3d.o Atom.o AtomEnergyGrid.o EnergyGrid.o EnergyCalculator.o log_writer_stream.o OBMol.o
-_CONFDOCK_OBJS = fraggrid_main.o Vector3d.o EnergyGrid.o Molecule.o Fragment.o EnergyGrid.o EnergyCalculator.o infile_reader.o utils.o MoleculeToFragments.o AtomEnergyGrid.o FragmentEnergyGrid.o Atom.o log_writer_stream.o log_writer.o UnionFindTree.o OBMol.o CalcMCFP.o Optimizer.o
+_GRADIENT_OBJS = gradient_main.o log_writer.o utils.o infile_reader.o Molecule.o Vector3d.o Atom.o AtomEnergyGrid.o EnergyGrid.o EnergyCalculator.o GradientCalculator.o log_writer_stream.o OBMol.o
+_CONFDOCK_OBJS = fraggrid_main.o Vector3d.o EnergyGrid.o Molecule.o Fragment.o EnergyGrid.o EnergyCalculator.o GradientCalculator.o infile_reader.o utils.o MoleculeToFragments.o AtomEnergyGrid.o FragmentEnergyGrid.o Atom.o log_writer_stream.o log_writer.o UnionFindTree.o OBMol.o CalcMCFP.o Optimizer.o
 _ATOMDOCK_OBJS = nofrag_main.o Vector3d.o EnergyGrid.o Molecule.o EnergyGrid.o EnergyCalculator.o infile_reader.o utils.o AtomEnergyGrid.o Atom.o log_writer_stream.o log_writer.o OBMol.o Optimizer.o
 _TEST_OBJS = Atom.o EnergyCalculator.o Molecule.o utils.o Vector3d.o TestEnergyCalculator.o TestMain.o
 
@@ -42,10 +43,10 @@ _EASYTEST_OBJS = easytest_main.o Vector3d.o Molecule.o EnergyGrid.o EnergyCalcul
 _SCOREONLY_OBJS = score_only_main.o Vector3d.o Molecule.o EnergyGrid.o EnergyCalculator.o infile_reader.o utils.o Atom.o log_writer_stream.o log_writer.o OBMol.o
 _INTRAENERGY_OBJS = intraenergy_main.o Vector3d.o Molecule.o EnergyGrid.o EnergyCalculator.o infile_reader.o utils.o Atom.o log_writer_stream.o log_writer.o OBMol.o
 
-# ALL = objs atomgrid-gen conformer-docking atom-docking unittest easytest-docking score-only intraenergy-only
-ALL = objs atomgrid-gen conformer-docking
+ALL = objs atomgrid-gen gradientgrid-gen conformer-docking atom-docking unittest easytest-docking score-only intraenergy-only
 
 GRID_OBJS = $(patsubst %,objs/%,$(_GRID_OBJS))
+GRADIENT_OBJS = $(patsubst %,objs/%,$(_GRADIENT_OBJS))
 CONFDOCK_OBJS = $(patsubst %,objs/%,$(_CONFDOCK_OBJS))
 ATOMDOCK_OBJS = $(patsubst %,objs/%,$(_ATOMDOCK_OBJS))
 TEST_OBJS = $(patsubst %,objs/%,$(_TEST_OBJS))
@@ -61,6 +62,9 @@ objs:
 	mkdir -p objs/test
 
 atomgrid-gen: $(GRID_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	
+gradientgrid-gen: $(GRADIENT_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
 
 conformer-docking: $(CONFDOCK_OBJS)
