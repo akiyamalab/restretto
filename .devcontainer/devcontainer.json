@@ -1,0 +1,5 @@
+{
+    "runArgs": [],
+    "name": "restretto",
+    "dockerFile": "Dockerfile",
+}
