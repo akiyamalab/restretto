@@ -43,7 +43,7 @@ _SCOREONLY_OBJS = score_only_main.o Vector3d.o Molecule.o EnergyGrid.o EnergyCal
 _INTRAENERGY_OBJS = intraenergy_main.o Vector3d.o Molecule.o EnergyGrid.o EnergyCalculator.o infile_reader.o utils.o Atom.o log_writer_stream.o log_writer.o OBMol.o
 
 # ALL = objs atomgrid-gen conformer-docking atom-docking unittest easytest-docking score-only intraenergy-only
-ALL = objs atomgrid-gen conformer-docking
+ALL = atomgrid-gen conformer-docking
 
 GRID_OBJS = $(patsubst %,objs/%,$(_GRID_OBJS))
 CONFDOCK_OBJS = $(patsubst %,objs/%,$(_CONFDOCK_OBJS))
@@ -54,7 +54,8 @@ SCOREONLY_OBJS = $(patsubst %,objs/%,$(_SCOREONLY_OBJS))
 INTRAENERGY_OBJS = $(patsubst %,objs/%,$(_INTRAENERGY_OBJS))
 
 
-all: $(ALL)
+all: objs $(ALL)
+	rm -r objs
 
 objs:
 	mkdir -p objs
