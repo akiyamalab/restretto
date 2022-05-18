@@ -3,9 +3,12 @@ REstretto (REuse of sub-STRuctures as an Effective Technique for protein-ligand 
 
 ## Installation
 
+Dockerfile is at `.devcontainer/Dockerfile`. It explains the requirement and what packages are needed.
+
 ### Requirement
-- Boost
-- Open Babel 2.x
+- Boost (latest)
+- Open Babel 2.4.1
+  - **OpenBabel 3.x (latest) is not supported.**
 
 ### Build
 
