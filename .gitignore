@@ -35,6 +35,7 @@
 
 /objs/*
 /atomgrid-gen
+/gradientgrid-gen
 /conformer-docking
 /atom-docking
 /unittest

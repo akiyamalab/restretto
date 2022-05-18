@@ -7,6 +7,7 @@ Dockerfile is at `.devcontainer/Dockerfile`. It explains the requirement and wha
 
 ### Requirement
 - Boost (latest)
+- Eigen (latest)
 - Open Babel 2.4.1
   - **OpenBabel 3.x (latest) is not supported.**
 

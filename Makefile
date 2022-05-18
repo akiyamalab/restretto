@@ -1,6 +1,7 @@
 CXX ?= g++
 BOOST_INSTALL_PATH ?= $(BOOST_ROOT)
 OBABEL_INSTALL_PATH ?= $(OPEN_BABEL_ROOT)
+EIGEN_INSTALL_PATH ?= $(EIGEN_ROOT)
 CXXFLAGS = -std=c++11
 ifeq ($(Debug),Y)
 CXXFLAGS += -g -O0
@@ -20,6 +21,7 @@ endif
 
 CXXFLAGS += $(OMPFLAG)
 
+# boost
 ifeq ($(BOOST_INSTALL_PATH),)
 BOOSTIP =
 BOOSTLP =
@@ -27,8 +29,25 @@ else
 BOOSTIP = -I$(BOOST_INSTALL_PATH)/include
 BOOSTLP = -L$(BOOST_INSTALL_PATH)/lib
 endif
+
+#openbabel
 OBABELIP = -I$(OBABEL_INSTALL_PATH)/include/openbabel-2.0
 OBABELLP = -L$(OBABEL_INSTALL_PATH)/lib
+
+#eigen
+ifneq ($(EIGEN_INSTALL_PATH),)
+EIGENIP ?= -I$(EIGEN_INSTALL_PATH)/include
+EIGENLP ?= -L$(EIGEN_INSTALL_PATH)/lib
+endif
+ifneq ($(EIGEN_INCLUDE_PATH),)
+EIGENIP := -I$(EIGEN_INCLUDE_PATH)
+endif
+ifneq ($(EIGEN_LIBRARY_PATH),)
+EIGENLP := -L$(EIGEN_LIBRARY_PATH)
+endif
+
+ALLIP = $(BOOSTIP) $(OBABELIP) $(EIGENIP)
+ALLLP = $(BOOSTLP) $(OBABELLP) $(EIGENLP)
 
 .SUFFIXES: .cc .o
 
@@ -62,35 +81,35 @@ objs:
 	mkdir -p objs/test
 
 atomgrid-gen: $(GRID_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 	
 gradientgrid-gen: $(GRADIENT_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 
 conformer-docking: $(CONFDOCK_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 
 atom-docking: $(ATOMDOCK_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 
 unittest: $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_unit_test_framework -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_unit_test_framework -lopenbabel
 
 easytest-docking: $(EASYTEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 
 score-only: $(SCOREONLY_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 
 intraenergy-only: $(INTRAENERGY_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(ALLLP) -lboost_regex -lboost_program_options -lopenbabel
 
 
 objs/%.o: src/%.cc src/%.hpp src/common.hpp
-	$(CXX) $(CXXFLAGS) $(BOOSTIP) $(OBABELIP) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(ALLIP) -o $@ -c $<
 
 objs/%.o: src/%.cc src/common.hpp
-	$(CXX) $(CXXFLAGS) $(BOOSTIP) $(OBABELIP) -o $@ -c $<
+	$(CXX) $(CXXFLAGS) $(ALLIP) -o $@ -c $<
 
 clean:
 	rm -rf $(ALL)

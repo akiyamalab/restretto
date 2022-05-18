@@ -10,6 +10,10 @@ RUN apt upgrade -y
 RUN apt install -y make g++ libboost-all-dev
 RUN apt install -y wget cmake 
 
+# installation of eigen
+RUN apt install -y libeigen3-dev
+ENV EIGEN_INCLUDE_PATH=/usr/include/eigen3
+
 # environment variables for openbabel-2.4.1
 # Note that openbabel-3.0.0 CAN'T be used
 ENV OBABEL_VERSION=2.4.1
