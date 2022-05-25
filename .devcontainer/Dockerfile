@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 SHELL ["/bin/bash", "-c"]
 
@@ -7,8 +7,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt update
 RUN apt upgrade -y
-RUN apt install -y make g++ libboost-all-dev
-RUN apt install -y wget cmake 
+RUN apt install -y make g++ libboost-all-dev \
+                   wget cmake git
+
 
 # environment variables for openbabel-2.4.1
 # Note that openbabel-3.0.0 CAN'T be used
@@ -24,8 +25,4 @@ RUN wget https://sourceforge.net/projects/openbabel/files/openbabel/${OBABEL_VER
     && mkdir -p build                                    \
     && cd build                                          \
     && cmake -DCMAKE_INSTALL_PREFIX=$OPEN_BABEL_ROOT ..  \
-    && make -j install
-
-
-# for development
-RUN apt install -y git
+    && make -j8 install
