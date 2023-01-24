@@ -1,3 +1,4 @@
+#include "common.hpp"
 #include "FragmentEnergyGrid.hpp"
 
 namespace fragdock {
@@ -11,7 +12,7 @@ namespace fragdock {
       cerr << "atom_grids is empty" << endl;
       return;
     }
-    assert(orig_frag.getCenter().abs() < 1e-4);
+    assert(orig_frag.getCenter().abs() < EPS);
     const Point3d<int>& num = atom_grids[0].getNum();
     grid = EnergyGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), num, LIMIT_ENERGY);
     int rotsz = rot_angles.size();

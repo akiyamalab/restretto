@@ -26,7 +26,7 @@ namespace fragdock {
     void axisRotate(const Vector3d &axis, double th);
     Vector3d unit() { fltype ab = this->abs(); return Vector3d(x/ab, y/ab, z/ab); }
     fltype getAngle(const Vector3d &o) const {
-      if (this->norm() < 1e-6 || o.norm() < 1e-6) {
+      if (this->norm() < EPS || o.norm() < EPS) {
         // std::cerr << "zero vector in Vector3d::getAngle" << std::endl;
         return 0;
       }

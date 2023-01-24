@@ -240,9 +240,10 @@ int main(int argc, char **argv){
                      utils::round(config.grid.search_pitch_y / config.grid.score_pitch_y),
                      utils::round(config.grid.search_pitch_z / config.grid.score_pitch_z));
 
-  assert(abs(config.grid.score_pitch_x * ratio.x - config.grid.search_pitch_x) < 1e-4);
-  assert(abs(config.grid.score_pitch_y * ratio.y - config.grid.search_pitch_y) < 1e-4);
-  assert(abs(config.grid.score_pitch_z * ratio.z - config.grid.search_pitch_z) < 1e-4);
+  // check whether the ratios are integer or not.
+  assert(abs(config.grid.score_pitch_x * ratio.x - config.grid.search_pitch_x) < EPS);
+  assert(abs(config.grid.score_pitch_y * ratio.y - config.grid.search_pitch_y) < EPS);
+  assert(abs(config.grid.score_pitch_z * ratio.z - config.grid.search_pitch_z) < EPS);
 
   Point3d<fltype> search_pitch(config.grid.search_pitch_x, config.grid.search_pitch_y, config.grid.search_pitch_z);
   Point3d<int> search_num(utils::ceili(config.grid.inner_width_x / 2 / search_pitch.x) * 2 + 1,
