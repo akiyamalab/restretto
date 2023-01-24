@@ -41,7 +41,7 @@ namespace utils {
   }
   
   int round(fltype val);
-
+  int ceili(fltype val);
   //Generate fltype random value between lower and upper. 
   fltype randf(fltype lower, fltype upper);
 

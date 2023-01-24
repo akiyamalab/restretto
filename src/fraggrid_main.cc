@@ -245,9 +245,9 @@ int main(int argc, char **argv){
   assert(abs(config.grid.score_pitch_z * ratio.z - config.grid.search_pitch_z) < 1e-4);
 
   Point3d<fltype> search_pitch(config.grid.search_pitch_x, config.grid.search_pitch_y, config.grid.search_pitch_z);
-  Point3d<int> search_num(static_cast<int>(ceil(config.grid.inner_width_x / 2 / search_pitch.x) + 1e-9) * 2 + 1,
-                          static_cast<int>(ceil(config.grid.inner_width_y / 2 / search_pitch.y) + 1e-9) * 2 + 1,
-                          static_cast<int>(ceil(config.grid.inner_width_z / 2 / search_pitch.z) + 1e-9) * 2 + 1);
+  Point3d<int> search_num(utils::ceili(config.grid.inner_width_x / 2 / search_pitch.x) * 2 + 1,
+                          utils::ceili(config.grid.inner_width_y / 2 / search_pitch.y) * 2 + 1,
+                          utils::ceili(config.grid.inner_width_z / 2 / search_pitch.z) * 2 + 1);
 
 
   EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);

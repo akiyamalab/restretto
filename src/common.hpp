@@ -7,6 +7,7 @@ typedef float fltype;
 const fltype INF_ENERGY = 1e9;
 const fltype LIMIT_ENERGY = 1e2;
 const int OUTPUT_NUM = 100;
+const fltype EPS = 1e-4;
 
 #endif
 

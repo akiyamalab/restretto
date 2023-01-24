@@ -118,9 +118,9 @@ int main(int argc, char **argv){
     fltype width_z = grid.outer_width_z;
     fragdock::Point3d<fltype> center(grid.cx, grid.cy, grid.cz);
     fragdock::Point3d<fltype> pitch(grid.score_pitch_x, grid.score_pitch_y, grid.score_pitch_z);
-    fragdock::Point3d<int> num(static_cast<int>(ceil(width_x / 2 / pitch.x) + 1e-9) * 2 + 1,
-                               static_cast<int>(ceil(width_y / 2 / pitch.y) + 1e-9) * 2 + 1,
-                               static_cast<int>(ceil(width_z / 2 / pitch.z) + 1e-9) * 2 + 1);
+    fragdock::Point3d<int> num(utils::ceili(width_x / 2 / pitch.x) * 2 + 1,
+                               utils::ceili(width_y / 2 / pitch.y) * 2 + 1,
+                               utils::ceili(width_z / 2 / pitch.z) * 2 + 1);
 
     logs::lout << logs::info << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type];
     fragdock::AtomEnergyGrid energy_grid(center, pitch, num, xs_type);
