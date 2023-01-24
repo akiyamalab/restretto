@@ -13,14 +13,22 @@ namespace fragdock {
     Point3d(const T &x, const T &y, const T &z) : x(x), y(y), z(z) {}
   };
 
+  /**
+   * A 3D grid of energy values.
+  */
   class EnergyGrid {
+  private:
+    /* initialize the energy grid with a real value ini */
+    void initEnergy(fltype ini) { this->grid = std::vector<fltype>(num.x*num.y*num.z, ini); }
+    void initEnergy() { initEnergy(INF_ENERGY); }
+
   protected:
     int max(int x, int y) const { return x>y?x:y; }
     int min(int x, int y) const { return x<y?x:y; }
-    std::vector<fltype> grid;
-    Point3d<fltype> center;
-    Point3d<fltype> pitch;
-    Point3d<int> num;
+    std::vector<fltype> grid; /* A raw 3D grid of energy values */
+    Point3d<fltype> center; /* The center coordinate of a grid */
+    Point3d<fltype> pitch; /* The grid pitch for each dimension */
+    Point3d<int> num; /* The numbers of grid points for each dimension */
 
   public:
     EnergyGrid() {}
@@ -29,30 +37,55 @@ namespace fragdock {
     EnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num, fltype ini)
       : center(center), pitch(pitch), num(num) { initEnergy(ini); }
     ~EnergyGrid() {}
-    void setEnergy(int x, int y, int z, fltype val) { grid[(x*num.y+y)*num.z+z] = val; }
-    // void setEnergy(const Vector3d &pos, fltype val) { setEnergy(convertX(pos), convertY(pos), convertZ(pos), val); }
-    void setEnergy(const std::vector<fltype>& grid) { this->grid = grid; }
-    void addEnergy(int x, int y, int z, fltype val) { grid[(x*num.y+y)*num.z+z] += val; }
-    void initEnergy(fltype ini) { this->grid = std::vector<fltype>(num.x*num.y*num.z, ini); }
-    void initEnergy() { initEnergy(INF_ENERGY); }
-    fltype getEnergy(int x, int y, int z) const;
-    fltype getEnergy(const Vector3d &pos) const;
-    const Point3d<fltype>& getPitch() const { return pitch; }
-    const Point3d<fltype>& getCenter() const { return center; }
-    const Point3d<int>& getNum() const { return num; }
-    // int convertX(const Vector3d &vec) const { return max(0, min(num.x-1, utils::round( (vec.x-center.x)/pitch.x + (num.x-1)/2))); }
-    // int convertY(const Vector3d &vec) const { return max(0, min(num.y-1, utils::round( (vec.y-center.y)/pitch.y + (num.y-1)/2))); }
-    // int convertZ(const Vector3d &vec) const { return max(0, min(num.z-1, utils::round( (vec.z-center.z)/pitch.z + (num.z-1)/2))); }
-    int convertX(const Vector3d &vec) const { return utils::round( (vec.x-center.x)/pitch.x + (num.x-1)/2); }
-    int convertY(const Vector3d &vec) const { return utils::round( (vec.y-center.y)/pitch.y + (num.y-1)/2); }
-    int convertZ(const Vector3d &vec) const { return utils::round( (vec.z-center.z)/pitch.z + (num.z-1)/2); }
-    Vector3d convert(int x, int y, int z) const { return Vector3d((x - (num.x-1)/2)*pitch.x + center.x,
-								  (y - (num.y-1)/2)*pitch.y + center.y,
-								  (z - (num.z-1)/2)*pitch.z + center.z); }
 
+    /* set an energy for grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates */
+    void setEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[(x_ind*num.y+y_ind)*num.z+z_ind] = val; }
+
+    /* add an energy for grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates */
+    void addEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[(x_ind*num.y+y_ind)*num.z+z_ind] += val; }
+
+
+    /* get an energy of grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates*/
+    fltype getEnergy(int x_ind, int y_ind, int z_ind) const;
+
+    /* get an energy of coordinate pos. */
+    fltype getEnergy(const Vector3d &pos) const;
+
+    /* get grid pitches for x, y, and z dimensions */
+    const Point3d<fltype>& getPitch() const { return pitch; }
+
+    /* get center position of the grid */
+    const Point3d<fltype>& getCenter() const { return center; }
+
+    /* get the numbers of grid points */
+    const Point3d<int>& getNum() const { return num; }
+
+    /* convert an x coordinate into x_ind of this grid */
+    int convertX(const Vector3d &vec) const { return utils::round( (vec.x-center.x)/pitch.x + (num.x-1)/2); }
+
+    /* convert a y coordinate into y_ind of this grid */
+    int convertY(const Vector3d &vec) const { return utils::round( (vec.y-center.y)/pitch.y + (num.y-1)/2); }
+
+    /* convert a z coordinate into z_ind of this grid */
+    int convertZ(const Vector3d &vec) const { return utils::round( (vec.z-center.z)/pitch.z + (num.z-1)/2); }
+
+    /* convert indices x_ind, y_ind, and z_ind to a 3d coordinate */
+    Vector3d convert(int x_ind, int y_ind, int z_ind) const { 
+      return Vector3d((x_ind - (num.x-1)/2)*pitch.x + center.x,
+								      (y_ind - (num.y-1)/2)*pitch.y + center.y,
+								      (z_ind - (num.z-1)/2)*pitch.z + center.z); 
+    }
+
+    /* Parse an energy grid data */
     void parse(std::ifstream& ifs);
+
+    /* Parse an energy grid file */
     void parse(const std::string& filename);
+
+    /* Write this energy grid data to a stream */
     void writeFile(std::ofstream& ofs) const;
+
+    /* Write this energy grid data to a file */
     void writeFile(const std::string& filename) const;
   };
 }
