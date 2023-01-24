@@ -1,6 +1,19 @@
 #include "EnergyCalculator.hpp"
 
+namespace {
+  /* distance threshold */
+  static const int THRESHOLD = 8; 
+
+  /* precision of pre-calculation*/
+  static const int PRECI = 1000;
+
+  /* list size per atom pair*/
+  static const int SZ = THRESHOLD * PRECI;
+}
+
 namespace fragdock {
+  fltype sqr(fltype x) { return x * x; }
+
   EnergyCalculator::EnergyCalculator(fltype rad_scale, fltype threthold) {
     pre_calculated_energy = std::vector<fltype>(XS_TYPE_SIZE * XS_TYPE_SIZE * SZ);
     for (int t1 = 0; t1 < XS_TYPE_SIZE; ++t1) {
@@ -11,13 +24,11 @@ namespace fragdock {
           fltype d = r - rad;
 
           pre_calculated_energy[(t1 * XS_TYPE_SIZE + t2) * SZ + i]
-              = (-0.035579) * exp(-sqr(d * 2)) * (t1 != XS_TYPE_DUMMY && t2 != XS_TYPE_DUMMY ? 1 : 0)
-              + (-0.005156) * exp(-sqr((d - 3.0) * 0.5)) * (t1 != XS_TYPE_DUMMY && t2 != XS_TYPE_DUMMY ? 1 : 0)
-              + ( 0.840245) * (d > threthold ? 0.0 : sqr(d))
-              // + ( 0.840245) * (d > threthold ? 0.0 : sqr(d - threthold))
-              // + ( 0.840245) * (d > 0.0 ? 0.0 : ((threthold < -EPS && d > threthold) ? sqr(d * d / threthold) : sqr(d)))
-              + (-0.035069) * ((xs_is_hydrophobic(t1) && xs_is_hydrophobic(t2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0)
-              + (-0.587439) * ((xs_hbond(t1, t2)) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+              = (-0.035579) * gauss1(t1, t2, d)
+              + (-0.005156) * gauss2(t1, t2, d)
+              + ( 0.840245) * repulsion(t1, t2, d)
+              + (-0.035069) * hydrophobic(t1, t2, d)
+              + (-0.587439) * Hydrogen(t1, t2, d);
         }
       }
     }
@@ -75,6 +86,37 @@ namespace fragdock {
 
 
 
+  fltype EnergyCalculator::gauss1(int t1, int t2, fltype d) {
+    if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
+    if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
+    return exp(-sqr(d * 2));
+  }
+
+  fltype EnergyCalculator::gauss2(int t1, int t2, fltype d) {
+    if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
+    if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
+    return exp(-sqr((d - 3.0) * 0.5));
+  }
+
+  fltype EnergyCalculator::repulsion(int t1, int t2, fltype d) {
+    if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
+    if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
+    return (d > 0 ? 0.0 : sqr(d));
+  }
+
+  fltype EnergyCalculator::hydrophobic(int t1, int t2, fltype d) {
+    if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
+    if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
+    if (!xs_is_hydrophobic(t1) || !xs_is_hydrophobic(t2)) return 0;
+    return ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d));
+  }
+
+  fltype EnergyCalculator::Hydrogen(int t1, int t2, fltype d) {
+    if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
+    if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
+    if (!xs_hbond(t1, t2)) return 0;
+    return ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571)));
+ }
 
   fltype EnergyCalculator::gauss1(const Molecule &ligand, const Molecule &receptor) {
     fltype sum_energy = 0.0;
@@ -88,7 +130,7 @@ namespace fragdock {
         fltype r = (la - ra).abs();
         if (r > THRESHOLD) continue;
         fltype d = r - xs_radius(t1) - xs_radius(t2);
-        sum_energy += exp(-sqr(d * 2));
+        sum_energy += gauss1(t1, t2, d);
       }
     }
     return sum_energy;
@@ -105,7 +147,7 @@ namespace fragdock {
         fltype r = (la - ra).abs();
         if (r > THRESHOLD) continue;
         fltype d = r - xs_radius(t1) - xs_radius(t2);
-        sum_energy += exp(-sqr((d - 3.0) * 0.5));
+        sum_energy += gauss2(t1, t2, d);
       }
     }
     return sum_energy;
@@ -122,7 +164,7 @@ namespace fragdock {
         fltype r = (la - ra).abs();
         if (r > THRESHOLD) continue;
         fltype d = r - xs_radius(t1) - xs_radius(t2);
-        sum_energy += (d > 0 ? 0.0 : sqr(d));
+        sum_energy += repulsion(t1, t2, d);
       }
     }
     return sum_energy;
@@ -139,7 +181,7 @@ namespace fragdock {
         fltype r = (la - ra).abs();
         if (r > THRESHOLD) continue;
         fltype d = r - xs_radius(t1) - xs_radius(t2);
-        sum_energy += ((xs_is_hydrophobic(t1) && xs_is_hydrophobic(t2)) ? ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d)) : 0.0);
+        sum_energy += hydrophobic(t1, t2, d);
       }
     }
     return sum_energy;
@@ -156,7 +198,7 @@ namespace fragdock {
         fltype r = (la - ra).abs();
         if (r > THRESHOLD) continue;
         fltype d = r - xs_radius(t1) - xs_radius(t2);
-        sum_energy += ((xs_hbond(t1, t2)) ? ((d >= 0) ? 0.0 : ((d <= -0.7) ? 1 : d * (-1.428571))): 0.0);
+        sum_energy += Hydrogen(t1, t2, d);
       }
     }
     return sum_energy;
