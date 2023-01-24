@@ -39,7 +39,8 @@ namespace {
       ("ligand,l", value<std::vector<std::string> >()->multitoken(), "ligand file")
       ("receptor,r", value<std::string>(), "receptor file (.pdb file)")
       ("grid,g", value<std::string>(), "grid folder")
-      ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]");
+      ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
+      ("log", value<std::string>(), "log file");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -61,6 +62,7 @@ namespace {
     if (vmap.count("output")) conf.output_file = vmap["output"].as<std::string>();
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
+    if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
     return conf;
   }
 
@@ -190,7 +192,10 @@ int main(int argc, char **argv){
 
   format::DockingConfiguration config = parseArgs(argc, argv);
 
-  logInit(config.output_file + "fraggrid__" + getDate() + ".log");
+  if(config.log_file == ""){
+    config.log_file = config.output_file + "fraggrid__" + getDate() + ".log";
+  }
+  logInit(config.log_file);
   logConfig(config);
 
   // parse receptor file
