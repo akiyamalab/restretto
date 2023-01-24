@@ -3,6 +3,7 @@
 namespace fragdock {
   fltype Optimizer::optimize(Molecule &mol, const EnergyCalculator& ec) const {
     using namespace std;
+    srand(0); // fix seed
 
     // hill climbing
     fltype opt = ec.getEnergy(mol, receptor);
@@ -47,6 +48,7 @@ namespace fragdock {
 
   fltype Optimizer_Grid::optimize(Molecule &mol) const {
     using namespace std;
+    srand(0); // fix seed
 
     // hill climbing
     fltype opt = calcscore(mol);
