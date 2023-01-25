@@ -90,5 +90,5 @@ objs/%.o: src/%.cc src/common.hpp
 	$(CXX) $(CXXFLAGS) $(BOOSTIP) $(OBABELIP) -o $@ -c $<
 
 clean:
-	rm -rf $(ALL)
+	rm -rf objs $(ALL)
 

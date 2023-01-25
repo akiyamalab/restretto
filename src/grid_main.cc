@@ -93,7 +93,7 @@ int main(int argc, char **argv){
   makeFolder(conf.grid_folder);
 
   //Prepareing logger
-  logs::lout.open("atomgrid-gen.log");
+  logs::log_init("atomgrid-gen.log");
 
   // logs::lout << logs::info << "Read parameter file. " << conf.forcefield_file;
   // fragdock::AtomType::setAtomParams(conf.forcefield_file.c_str());
