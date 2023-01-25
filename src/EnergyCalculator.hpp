@@ -25,9 +25,8 @@ namespace fragdock {
 
     /**
      * @param rad_scale scale factor of radius of atoms
-     * @param threthold distance threshold
     */
-    EnergyCalculator(fltype rad_scale, fltype threthold);
+    EnergyCalculator(fltype rad_scale);
 
     /* calculate an interaction energy between an ligand atom and all protein atoms */
     fltype getEnergy(const Atom &latom, const Molecule &receptor) const; 

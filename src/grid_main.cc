@@ -104,7 +104,7 @@ int main(int argc, char **argv){
 
   format::SearchGrid& grid = conf.grid;
 
-  fragdock::EnergyCalculator calc(0.95, 0.0);
+  fragdock::EnergyCalculator calc(0.95);
 
   //Making energyGrid
   for(int xs_type = 0; xs_type < XS_TYPE_SIZE; xs_type++){

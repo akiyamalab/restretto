@@ -14,7 +14,7 @@ namespace {
 namespace fragdock {
   fltype sqr(fltype x) { return x * x; }
 
-  EnergyCalculator::EnergyCalculator(fltype rad_scale, fltype threthold) {
+  EnergyCalculator::EnergyCalculator(fltype rad_scale) {
     pre_calculated_energy = std::vector<fltype>(XS_TYPE_SIZE * XS_TYPE_SIZE * SZ);
     for (int t1 = 0; t1 < XS_TYPE_SIZE; ++t1) {
       for (int t2 = 0; t2 < XS_TYPE_SIZE; ++t2) {

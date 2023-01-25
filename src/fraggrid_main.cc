@@ -287,8 +287,7 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;
-  // for calc intra energy of ligands
-  EnergyCalculator calc(1.0, 0.0);
+  EnergyCalculator ene_calculator(1.0); 
   logs::lout << logs::info << "end pre-calculate energy" << endl;
 
 
@@ -306,7 +305,7 @@ int main(int argc, char **argv){
     Molecule& mol = ligands_mol[lig_ind];
 
     mol.deleteHydrogens();
-    fltype intra = calc.getIntraEnergy(mol);
+    fltype intra = ene_calculator.getIntraEnergy(mol);
     mol.setIntraEnergy(intra);
 
     vector<Fragment> fragments = DecomposeMolecule(mol);
