@@ -254,11 +254,13 @@ int main(int argc, char **argv){
   EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
 
-  int FGRID_SIZE = (int)((config.mem_size << 20) / ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype)));
+  // The number how many fragment grids can be stored in memory.
+  // It affects reuse of fragment grids.
+  int FGRID_SIZE = (int)((config.mem_size * 1024 * 1024) / ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype)));
   if (FGRID_SIZE < 1) {
-    cerr << "[assert] memory size is so small." << endl;
-    cerr << "         need memory size : " << ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype) >> 20) + 1 << " MB" << endl;
-    assert(0);
+    logs::lout << logs::error << "Memory size is too small to load a fragment grid." << endl;
+    logs::lout << logs::error << "Memory size of " << ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype) / 1024 / 1024) + 1 << " MB is at least needed." << endl;
+    throw std::runtime_error("Memory size is too small to load a fragment grid.");
   }
   if (config.reuse_grid == format::DockingConfiguration::REUSE_NONE) {
     FGRID_SIZE = 1;
@@ -667,6 +669,6 @@ int main(int argc, char **argv){
   // }
   // logs::lout << endl;
 
-  logs::lout.close();
+  logs::close();
   return 0;
 }
