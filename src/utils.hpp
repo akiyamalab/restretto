@@ -41,7 +41,13 @@ namespace utils {
   }
   
   int round(fltype val);
+
+  /**
+  * @param[in] val a real value
+  * @return integer a rounded value
+  */
   int ceili(fltype val);
+
   //Generate fltype random value between lower and upper. 
   fltype randf(fltype lower, fltype upper);
 

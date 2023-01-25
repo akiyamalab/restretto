@@ -205,7 +205,7 @@ int main(int argc, char **argv){
   // parse ligands file
   vector<OpenBabel::OBMol> ligands = format::ParseFileToOBMol(config.ligand_files);
 
-  int ligs_sz = ligands.size();
+  int ligs_sz = ligands.size(); /* the number of ligands */
   logs::lout << "number of ligands: " << ligs_sz << endl;
 
   // ================================================================
@@ -267,8 +267,8 @@ int main(int argc, char **argv){
   }
   logs::lout << logs::info << "fragment grids storage size : " << FGRID_SIZE << endl;
 
-  vector<Molecule> ligands_mol(ligs_sz);
-  vector<FragmentsVector> fragvecs(ligs_sz);
+  vector<Molecule> ligands_mol(ligs_sz);     /* a vector of ligand objects */
+  vector<FragmentsVector> fragvecs(ligs_sz); /* a vector of fragment vectors which correspond to ligands */
 
   vector<Fragment> fragtemps;
 
