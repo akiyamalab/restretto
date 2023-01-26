@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <sys/stat.h>
 #include <chrono>
+#include <stdexcept>
 
 #include <unordered_map>
 
@@ -75,15 +76,6 @@ namespace {
     return dateStr;
   }
 
-  void logInit(const std::string& filename){
-    logs::lout.open(filename.c_str());
-    if(!logs::lout) {
-      std::cerr << "error: log file cannot open." << std::endl;
-      exit(1);
-    }
-
-    logs::lout << logs::info << "################ Program start ################" << std::endl;
-  }
 
   void logConfig(const format::DockingConfiguration config){
     for(int i=0; i<config.ligand_files.size(); ++i){
@@ -272,19 +264,17 @@ int main(int argc, char **argv){
 
   vector<Fragment> fragtemps;
 
-  vector<int> frag_importance;
+  typedef uint lig_ind;  /* index of a ligand */
+  typedef uint frag_ind; /* index of a fragment */
+
+  vector<int> frag_importance; /* # fragment heavy atoms * fragment occurrence */
   int ftmpsz = 0;
-  int fnums = 0;
-  unordered_map<string, int> fragmap;
+  int fnums = 0;  /* TODO: can it be removed?*/
+  unordered_map<string, frag_ind> fragmap; /* a map of {smiles -> an index of a fragment list} */
 
-  int lig_kind_sz = 0;
-  vector<vector<int> > same_ligs;
-  unordered_map<string, int> lig_map;
-
-  fltype margin = min({ config.grid.outer_width_x - config.grid.inner_width_x,
-                        config.grid.outer_width_y - config.grid.inner_width_y,
-                        config.grid.outer_width_z - config.grid.inner_width_z }) * 0.5;
-
+  int lig_kind_sz = 0; /* The number of unique ligands */
+  vector<vector<lig_ind> > same_ligs; /* conformer indices list for each unique ligand */
+  unordered_map<string, lig_ind> lig_map; /* smiles -> an index of a ligand list */
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;
   EnergyCalculator ene_calculator(1.0); 
@@ -293,75 +283,80 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] START FRAGMENTATION" << endl;
 
-  logs::lout << "grid margin : " << margin << endl;
-  long long allcost = 0;
+  /**
+   * Fragmentation
+   * input:
+   *  vector<OpenBabel::OBMol> ligands
+   *  uint ligs_sz
+   * output:
+   *  uint allcost
+  */
+
+  long long allcost = 0; /* cumulated number of heavy atoms of fragments. duplicated fragments are also counted. */
   long long minimum_cost = 0;
-  for (int lig_ind = 0; lig_ind < ligs_sz; ++lig_ind) {
-    OpenBabel::OBMol& ligand = ligands[lig_ind];
-    ligand.AddHydrogens();
-    ligands_mol[lig_ind] = format::toFragmentMol(ligand);
-    ligand.DeleteHydrogens();
+  for (lig_ind l_ind = 0; l_ind < ligs_sz; ++l_ind) {
+    OpenBabel::OBMol& ob_ligand = ligands[l_ind];
+    ob_ligand.AddHydrogens();
+    ligands_mol[l_ind] = format::toFragmentMol(ob_ligand);
+    ob_ligand.DeleteHydrogens();
 
-    Molecule& mol = ligands_mol[lig_ind];
+    Molecule& mol_ligand = ligands_mol[l_ind];
 
-    mol.deleteHydrogens();
-    fltype intra = ene_calculator.getIntraEnergy(mol);
-    mol.setIntraEnergy(intra);
+    mol_ligand.deleteHydrogens();
+    fltype intra = ene_calculator.getIntraEnergy(mol_ligand);
+    mol_ligand.setIntraEnergy(intra);
 
-    vector<Fragment> fragments = DecomposeMolecule(mol);
+    vector<Fragment> fragments = DecomposeMolecule(mol_ligand);
 
-    // logs::lout << (lig_ind + 1) << "th ligand, fragment size : " << fragments.size() << endl;
+    // logs::lout << (l_ind + 1) << "th ligand, fragment size : " << fragments.size() << endl;
 
-    for (auto& frag : fragments) {
+    for (Fragment& mol_frag : fragments) {
       ++fnums;
-      OpenBabel::OBMol obmol = format::toOBMol(frag, ligand);
-      vector<unsigned int> canon_labels;
-      OpenBabel::getRenumber(obmol, canon_labels);
+      OpenBabel::OBMol ob_frag = format::toOBMol(mol_frag, ob_ligand);
+      vector<uint> canon_labels; /* atom indices ordered canonically */
+      OpenBabel::getRenumber(ob_frag, canon_labels);
 
-      string smiles = OpenBabel::canonicalSmiles(obmol);
+      const string frag_smiles = OpenBabel::canonicalSmiles(ob_frag);
 
-      frag.renumbering(frag.size(), canon_labels);
-      allcost += frag.size();
-      Fragment temp = frag;
+      mol_frag.renumbering(mol_frag.size(), canon_labels);
+      allcost += mol_frag.size();
+      Fragment temp = mol_frag;
 
-      if (fragmap.count(smiles)) {
-        temp = fragtemps[fragmap[smiles]];
-        frag_importance[fragmap[smiles]] += temp.size();
+      if (fragmap.count(frag_smiles)) {
+        temp = fragtemps[fragmap[frag_smiles]];
+        frag_importance[fragmap[frag_smiles]] += temp.size();
       }
       else {
         temp.settri();
-        temp.normalize();
+        temp.normalize_pose();
         temp.settempind(ftmpsz);
         fragtemps.push_back(temp);
 
         frag_importance.push_back(0);
-        fragmap[smiles] = ftmpsz;
+        fragmap[frag_smiles] = ftmpsz;
         ++ftmpsz;
         minimum_cost += temp.size();
       }
-      frag.settri(temp);
+      mol_frag.settri(temp);
       // frag.setrotid(rotations);
-      frag.settempind(temp.gettempind());
+      mol_frag.settempind(temp.gettempind());
 
-      fragvecs[lig_ind].append(fragvec(frag.getCenter(), frag.gettempind(), frag.size()));
+      fragvecs[l_ind].append(fragvec(mol_frag.getCenter(), mol_frag.gettempind(), mol_frag.size()));
 
-      // logs::lout << temp << frag;
+      // logs::lout << temp << mol_frag;
     }
 
-    // mol.deleteHydrogens();
-    // mol.calcRadius();
-    Vector3d ofst = mol.getCenter();
-    // logs::lout << ofst << endl;
-    mol.translate(-ofst);
-    fragvecs[lig_ind].translate(-ofst);
+    Vector3d ofst = mol_ligand.getCenter();
+    mol_ligand.translate(-ofst);
+    fragvecs[l_ind].translate(-ofst);
 
-    const string& identifier = mol.getIdentifier();
+    const string& identifier = mol_ligand.getIdentifier();
     if (!lig_map.count(identifier)) {
       lig_map[identifier] = lig_kind_sz;
       ++lig_kind_sz;
-      same_ligs.push_back(vector<int>());
+      same_ligs.push_back(vector<lig_ind>());
     }
-    same_ligs[lig_map[identifier]].push_back(lig_ind);
+    same_ligs[lig_map[identifier]].push_back(l_ind);
   }
 
   logs::lout << logs::info << "fragment types : " << ftmpsz << endl;

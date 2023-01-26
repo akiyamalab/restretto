@@ -15,17 +15,20 @@ namespace fragdock {
     Fragment() {};
     int getId() const { return id; }
     int gettri(int i) const { return tri[i]; }
+
+    /* Determine three atoms which will be used to define normal rotation */
     void settri();
+    /** 
+     * Determine three atoms which will be used to define normal rotation 
+     * Just copying from another Fragment object
+     */
     void settri(const Fragment& temp);
-    // void setrotid(const std::vector<Vector3d>& rots);
-    // int getrotid() const { return rotid; }
-    // void getRot(fltype& theta, fltype& phi, fltype& psi);
+
     Vector3d getRot();
-    Vector3d getPos() const;
-    // Vector3d getCenter() const { return getPos(); }
-    // Vector3d getNormalizeRot();
     void getNormalizeRot(fltype& theta, fltype& phi, fltype& psi);
-    void normalize();
+
+    /* normalize position and rotation */
+    void normalize_pose();
 
     void settempind(int ind) { tempind = ind; }
     int gettempind() const { return tempind; }

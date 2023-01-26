@@ -62,46 +62,11 @@ namespace fragdock {
     tri[2] = temp.tri[2];
   }
 
-  // void Fragment::setrotid(const std::vector<Vector3d>& rots) {
-  //   fltype theta, phi, psi;
-  //   getNormalizeRot(psi, phi, theta);
-  //   theta = -theta;
-  //   phi = -phi;
-  //   psi = -psi;
-
-  //   Vector3d x(1, 0, 0);
-  //   Vector3d y(0, 1, 0);
-  //   Vector3d z(0, 0, 1);
-  //   x.rotate(theta, phi, psi);
-  //   y.rotate(theta, phi, psi);
-  //   z.rotate(theta, phi, psi);
-  //   fltype mi = 1e6;
-  //   int minid = -1;
-  //   for (int i = 0; i < rots.size(); ++i) {
-  //     Vector3d rx(1, 0, 0);
-  //     Vector3d ry(0, 1, 0);
-  //     Vector3d rz(0, 0, 1);
-  //     rx.rotate(rots[i]);
-  //     ry.rotate(rots[i]);
-  //     rz.rotate(rots[i]);
-  //     fltype d = (x - rx).norm() + (y - ry).norm() + (z - rz).norm();
-  //     if (d < mi) {
-  //       mi = d;
-  //       minid = i;
-  //     }
-  //   }
-  //   // logs::lout << mi << " " << minid << std::endl;
-  //   assert(minid != -1);
-  //   rotid = minid;
-  // }
+  /* Calculate rotation status of this pose */
   Vector3d Fragment::getRot() {
     fltype theta, phi, psi;
     getNormalizeRot(theta, phi, psi);
     return Vector3d(-psi, -phi, -theta);
-  }
-  Vector3d Fragment::getPos() const {
-    assert(tri[0] != -1);
-    return atoms[tri[0]];
   }
 
   void Fragment::getNormalizeRot(fltype& theta, fltype& phi, fltype& psi) {
@@ -134,7 +99,7 @@ namespace fragdock {
     translate(mv);
   }
 
-  void Fragment::normalize() {
+  void Fragment::normalize_pose() {
     fltype theta, phi, psi;
     getNormalizeRot(theta, phi, psi);
     // translate(-atoms[tri[0]]);
