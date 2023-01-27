@@ -8,10 +8,10 @@ namespace fragdock {
   struct fragvec {
     Vector3d pos;
     // int rotid;
-    int fragid; // equal temp_id
+    int frag_idx; // equal frag_idx
     int size;
     int rank;
-    fragvec(const Vector3d& p, int fragid, int size) : fragid(fragid), size(size) {
+    fragvec(const Vector3d& p, int fragid, int size) : frag_idx(fragid), size(size) {
       pos.x = p.x;
       pos.y = p.y;
       pos.z = p.z;
@@ -38,7 +38,7 @@ namespace fragdock {
     }
     void sort(const std::vector<int>& fragrank) {
       for (auto& fv : vecs)
-        fv.setrank(fragrank[fv.fragid]);
+        fv.setrank(fragrank[fv.frag_idx]);
 
       std::sort(vecs.begin(), vecs.end());
     }

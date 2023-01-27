@@ -181,6 +181,12 @@ namespace fragdock {
     bonds = newbonds;
     bond_ids = newbond_ids;
   }
+  bool Molecule::isRenumbered() const {
+    for (int i = 0; i < size(); ++i) {
+      if (atoms[i].getId() != i) return false;
+    }
+    return true;
+  }
   void Molecule::deleteHydrogens() {
     using namespace std;
     vector<unsigned int> vec(size(), 0);

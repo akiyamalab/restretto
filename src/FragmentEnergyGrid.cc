@@ -5,8 +5,7 @@ namespace fragdock {
   FragmentEnergyGrid::FragmentEnergyGrid(const Fragment& orig_frag,
                                          const std::vector<Vector3d>& rot_angles,
                                          const std::vector<AtomEnergyGrid>& atom_grids,
-                                         const EnergyGrid& distance_grid) : frag_id(orig_frag.getId()),
-                                                                            temp_id(orig_frag.gettempind()) {
+                                         const EnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
     using namespace std;
     if(atom_grids.empty()) {
       cerr << "atom_grids is empty" << endl;

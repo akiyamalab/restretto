@@ -107,7 +107,7 @@ namespace {
     int c = 0;
     for (int i = 0; i < frags.size(); ++i) {
       for (auto& j : frags[sorted_lig[i]].getvecs()) {
-        int id = j.fragid;
+        int id = j.frag_idx;
         if (before[id] == c) {
           reduce += j.size;
           ret[c] = MCFP::node(c, 0);
@@ -259,87 +259,83 @@ int main(int argc, char **argv){
   }
   logs::lout << logs::info << "fragment grids storage size : " << FGRID_SIZE << endl;
 
-  vector<Molecule> ligands_mol(ligs_sz);     /* a vector of ligand objects */
   vector<FragmentsVector> fragvecs(ligs_sz); /* a vector of fragment vectors which correspond to ligands */
 
-  vector<Fragment> fragtemps;
-
-  typedef uint lig_ind;  /* index of a ligand */
-  typedef uint frag_ind; /* index of a fragment */
+  vector<Fragment> frag_library; /* list of unique fragments which poses are normalized*/
 
   vector<int> frag_importance; /* # fragment heavy atoms * fragment occurrence */
-  int ftmpsz = 0;
-  int fnums = 0;  /* TODO: can it be removed?*/
-  unordered_map<string, frag_ind> fragmap; /* a map of {smiles -> an index of a fragment list} */
+  unordered_map<string, uint> fragmap; /* a map of {smiles -> an index of a fragment list} */
 
-  int lig_kind_sz = 0; /* The number of unique ligands */
-  vector<vector<lig_ind> > same_ligs; /* conformer indices list for each unique ligand */
-  unordered_map<string, lig_ind> lig_map; /* smiles -> an index of a ligand list */
+  vector<vector<uint> > same_ligs; /* conformer indices list for each unique ligand */
+  unordered_map<string, uint> lig_map; /* smiles -> an index of a ligand list */
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;
   EnergyCalculator ene_calculator(1.0); 
   logs::lout << logs::info << "end pre-calculate energy" << endl;
 
 
-  logs::lout << logs::info << "[TIME STAMP] START FRAGMENTATION" << endl;
-
-  /**
-   * Fragmentation
-   * input:
-   *  vector<OpenBabel::OBMol> ligands
-   *  uint ligs_sz
-   * output:
-   *  uint allcost
-  */
-
-  long long allcost = 0; /* cumulated number of heavy atoms of fragments. duplicated fragments are also counted. */
-  long long minimum_cost = 0;
-  for (lig_ind l_ind = 0; l_ind < ligs_sz; ++l_ind) {
+  logs::lout << logs::info << "[TIME STAMP] START MOLECULE OBJECT CONVERSION" << endl;
+  vector<Molecule> ligands_mol(ligs_sz); /* a vector of ligand objects */
+  for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
     OpenBabel::OBMol& ob_ligand = ligands[l_ind];
     ob_ligand.AddHydrogens();
     ligands_mol[l_ind] = format::toFragmentMol(ob_ligand);
     ob_ligand.DeleteHydrogens();
+  }
+  logs::lout << logs::info << "[TIME STAMP] END   MOLECULE OBJECT CONVERSION" << endl;
 
+
+  logs::lout << logs::info << "[TIME STAMP] START INTRA ENERGY CALCULATION" << endl;
+  for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
     Molecule& mol_ligand = ligands_mol[l_ind];
-
     mol_ligand.deleteHydrogens();
     mol_ligand.setIntraEnergy(
       ene_calculator.calcIntraEnergy(mol_ligand)
     );
+  }
+  logs::lout << logs::info << "[TIME STAMP] END   INTRA ENERGY CALCULATION" << endl;
 
-    vector<Fragment> fragments = DecomposeMolecule(mol_ligand);
 
-    // logs::lout << (l_ind + 1) << "th ligand, fragment size : " << fragments.size() << endl;
+  logs::lout << logs::info << "[TIME STAMP] START FRAGMENTATION" << endl;
+  vector<vector<Fragment> > fragments_of_ligands(ligs_sz); /* list of fragments for each ligand */
+  for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
+    Molecule& mol_ligand = ligands_mol[l_ind];
+    fragments_of_ligands[l_ind] = DecomposeMolecule(mol_ligand);
+  }
+  logs::lout << logs::info << "[TIME STAMP] END   FRAGMENTATION" << endl;
+
+
+
+
+  for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
+    OpenBabel::OBMol&  ob_ligand = ligands[l_ind];
+    Molecule&         mol_ligand = ligands_mol[l_ind];
+    vector<Fragment>&  fragments = fragments_of_ligands[l_ind];
 
     for (Fragment& mol_frag : fragments) {
-      ++fnums;
       OpenBabel::OBMol ob_frag = format::toOBMol(mol_frag, ob_ligand);
-      vector<uint> canon_labels; /* atom indices ordered canonically */
-      OpenBabel::getRenumber(ob_frag, canon_labels);
-
       const string frag_smiles = OpenBabel::canonicalSmiles(ob_frag);
 
+      vector<uint> canon_labels; /* atom indices ordered canonically */
+      OpenBabel::getRenumber(ob_frag, canon_labels);
       mol_frag.renumbering(mol_frag.size(), canon_labels);
-      allcost += mol_frag.size();
-      Fragment temp = mol_frag;
 
+      Fragment temp = mol_frag;
       if (fragmap.count(frag_smiles)) {
-        temp = fragtemps[fragmap[frag_smiles]];
+        temp = frag_library[fragmap[frag_smiles]];
         frag_importance[fragmap[frag_smiles]] += temp.size();
       }
       else {
         temp.normalize_pose();
-        temp.settempind(ftmpsz);
-        fragtemps.push_back(temp);
+        temp.setIdx(frag_library.size());
+        frag_library.push_back(temp);
+        fragmap[frag_smiles] = temp.getIdx();
 
         frag_importance.push_back(0);
-        fragmap[frag_smiles] = ftmpsz;
-        ++ftmpsz;
-        minimum_cost += temp.size();
       }
-      mol_frag.settempind(temp.gettempind());
+      mol_frag.setIdx(temp.getIdx());
 
-      fragvecs[l_ind].append(fragvec(mol_frag.getCenter(), mol_frag.gettempind(), mol_frag.size()));
+      fragvecs[l_ind].append(fragvec(mol_frag.getCenter(), mol_frag.getIdx(), mol_frag.size()));
 
       // logs::lout << temp << mol_frag;
     }
@@ -350,16 +346,11 @@ int main(int argc, char **argv){
 
     const string& identifier = mol_ligand.getIdentifier();
     if (!lig_map.count(identifier)) {
-      lig_map[identifier] = lig_kind_sz;
-      ++lig_kind_sz;
-      same_ligs.push_back(vector<lig_ind>());
+      lig_map[identifier] = lig_map.size();
+      same_ligs.push_back(vector<uint>());
     }
     same_ligs[lig_map[identifier]].push_back(l_ind);
   }
-
-  logs::lout << logs::info << "fragment types : " << ftmpsz << endl;
-
-  logs::lout << logs::info << "fragment num : " << fnums << endl;
 
   fragmap.clear();
 
@@ -383,13 +374,13 @@ int main(int argc, char **argv){
 
   if (config.reorder) {
   // if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE) {
-    vector<int> fragrank(ftmpsz);
-    for (int i = 0; i < ftmpsz; ++i) {
+    vector<int> fragrank(frag_library.size());
+    for (int i = 0; i < frag_library.size(); ++i) {
       fragrank[i] = i;
     }
     sort(fragrank.begin(), fragrank.end(), [&](const int& a, const int& b){ return frag_importance[a] > frag_importance[b]; });
     inverse(fragrank);
-    // for (int i = 0; i < ftmpsz; ++i) {
+    // for (int i = 0; i < frag_library.size(); ++i) {
     //   logs::lout << fragrank[i] << " " << frag_importance[i] << endl;
     // }
 
@@ -400,7 +391,7 @@ int main(int argc, char **argv){
   }
 
   if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE) {
-    vector<MCFP::node> graph = makeGraph(fragvecs, sorted_lig, ftmpsz, pred_reduce);
+    vector<MCFP::node> graph = makeGraph(fragvecs, sorted_lig, frag_library.size(), pred_reduce);
 
     pred_reduce += MCFP::runLeftBackSSP(graph, FGRID_SIZE, nextgridsp);
     // cerr << "predict reduce cost : " << pred_reduce << endl;
@@ -411,7 +402,7 @@ int main(int argc, char **argv){
   vector<FragmentEnergyGrid> fragment_grids(FGRID_SIZE);
   EnergyGrid distance_grid = makeDistanceGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol);
 
-  // vector<vector<OpenBabel::OBMol> > outputobmols(lig_kind_sz);
+  // vector<vector<OpenBabel::OBMol> > outputobmols(lig_map.size());
 
   int top_num = 1;
   int top_before_strictopt = 2000;
@@ -424,14 +415,14 @@ int main(int argc, char **argv){
 
   // ---- use in REUSE_GRID_ONLINE only ----
   vector<int> last_used(FGRID_SIZE, -1);
-  vector<int> fgrid_ind(ftmpsz, -1);
+  vector<int> fgrid_ind(frag_library.size(), -1);
   // ---------------------------------------
 
   std::chrono::milliseconds fgrid_time(0);
   std::chrono::milliseconds real_time(0);
 
-  // vector<priority_queue<pos_param> > q(lig_kind_sz);
-  vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_kind_sz, utils::MinValuesVector<pos_param>(top_before_strictopt));
+  // vector<priority_queue<pos_param> > q(lig_map.size());
+  vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(top_before_strictopt));
 
   int gsx = to_score_num(0, score_num.x, search_num.x, ratio.x);
   int gsy = to_score_num(0, score_num.y, search_num.y, ratio.y);
@@ -469,7 +460,7 @@ int main(int argc, char **argv){
     auto t1 = std::chrono::system_clock::now();
 
     for (int j = 0; j < sz; ++j, ++frag_itr) {
-      int fragid = fragvecs[lig_ind].getvec(j).fragid;
+      int fragid = fragvecs[lig_ind].getvec(j).frag_idx;
       int nextsp = -1;
       if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE || config.reuse_grid == format::DockingConfiguration::REUSE_NONE) {
         if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE)
@@ -477,8 +468,8 @@ int main(int argc, char **argv){
         else
           nextsp = 0;
 
-        if (fragment_grids[nextsp].temp_id != fragid) {
-          fragment_grids[nextsp] = FragmentEnergyGrid(fragtemps[fragid], rotations_fragment, atom_grids, distance_grid);
+        if (fragment_grids[nextsp].frag_idx != fragid) {
+          fragment_grids[nextsp] = FragmentEnergyGrid(frag_library[fragid], rotations_fragment, atom_grids, distance_grid);
         }
         else {
           reduces += fragvecs[lig_ind].getvec(j).size;
@@ -495,11 +486,11 @@ int main(int argc, char **argv){
           }
           assert(nextsp != -1);
           if (mi != -1) {
-            // logs::lout << logs::info << "remove id : " << fragment_grids[nextsp].temp_id << " fragment grid in vector at " << nextsp << endl;
-            fgrid_ind[fragment_grids[nextsp].temp_id] = -1;
+            // logs::lout << logs::info << "remove id : " << fragment_grids[nextsp].frag_idx << " fragment grid in vector at " << nextsp << endl;
+            fgrid_ind[fragment_grids[nextsp].frag_idx] = -1;
           }
           // logs::lout << logs::info << "calc id : " << fragid << " fragment grid and store to vector at " << nextsp << endl;
-          fragment_grids[nextsp] = FragmentEnergyGrid(fragtemps[fragid], rotations_fragment, atom_grids, distance_grid);
+          fragment_grids[nextsp] = FragmentEnergyGrid(frag_library[fragid], rotations_fragment, atom_grids, distance_grid);
           fgrid_ind[fragid] = nextsp;
         }
         else {
@@ -513,7 +504,7 @@ int main(int argc, char **argv){
         assert(0);
       }
 
-      assert(fragment_grids[nextsp].temp_id == fragid);
+      assert(fragment_grids[nextsp].frag_idx == fragid);
       const FragmentEnergyGrid& fg = fragment_grids[nextsp];
 
       // #pragma omp parallel for
@@ -560,7 +551,7 @@ int main(int argc, char **argv){
   logs::lout << logs::info << "[TIME STAMP] realcalc_time : " << real_time.count() << endl;
 
   vector<pair<fltype, string>> ranking;
-  ranking.reserve(lig_kind_sz);
+  ranking.reserve(lig_map.size());
   OpenBabel::outputOBMol outputs(config.output_file);
   ofstream outputcsv(config.output_file + "fraggrid__" + getDate() + ".csv");
 
@@ -623,9 +614,9 @@ int main(int argc, char **argv){
   outputs.close();
   outputcsv.close();
 
-  assert(ranking.size() == lig_kind_sz);
+  assert(ranking.size() == lig_map.size());
   sort(ranking.begin(), ranking.end());
-  for (int i = 0; i < lig_kind_sz; ++i) {
+  for (int i = 0; i < lig_map.size(); ++i) {
     logs::lout << (i + 1) << "th ligand : " << ranking[i].second << endl;
     logs::lout << "score : " << ranking[i].first << endl;
   }
@@ -641,9 +632,32 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "################ Program end ################" << endl;
 
+
+  /* ########### calculate statistics ################ */
+  long long allcost = 0; /* The total cost without the reuse of fragment grids */
+  for (const auto& fragments: fragments_of_ligands) {
+    for (const Fragment& mol_frag: fragments) {
+      allcost += mol_frag.size();
+    }
+  }
+
+  long long minimum_cost = 0; /* The total cost if all fragment grids can be stored */
+  for (const auto& frag: frag_library){
+    minimum_cost += frag.size();
+  } 
+
+  int fnums = 0;
+  for (const auto& fragments: fragments_of_ligands) {
+    fnums += fragments.size();
+  }
+  /* ########### calculate statistics END ################ */
+
+
+
+
   logs::lout << logs::info << "[FINAL_RESULT] "
       << ligs_sz << "/" << config.getReuseGridString() << "/" << (config.reorder ? "reorder" : "no_reorder") << "/" << config.mem_size << "/" << config.grid.inner_width_x << ", "
-      << "fragment types : " << ftmpsz << ", "
+      << "fragment types : " << frag_library.size() << ", "
       << "fragment num : " << fnums << ", "
       << "all cost : " << allcost << ", "
       << "minimum cost : " << minimum_cost << ", "

@@ -11,9 +11,8 @@ namespace fragdock {
     EnergyGrid grid;
     // void parse(const std::string& filename, int rot_size);
   public:
-    int frag_id;
-    int temp_id;
-    FragmentEnergyGrid() { frag_id = temp_id = -1; }
+    int frag_idx;
+    FragmentEnergyGrid() { frag_idx = -1; }
     // FragmentEnergyGrid(int frag_id, const std::string& filename, int rot_size)
     // : frag_id(frag_id) { parse(filename, rot_size); }
     FragmentEnergyGrid(const Fragment& orig_frag,

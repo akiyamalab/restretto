@@ -1,7 +1,7 @@
 #include "Fragment.hpp"
 
 namespace fragdock {
-  Fragment::Fragment(int id, const std::vector<Atom>& atoms) : id(id) {
+  Fragment::Fragment(int id, const std::vector<Atom>& atoms) {
     this->atoms = atoms;
     int ma = 0;
     for (auto& a : atoms) {
@@ -23,6 +23,9 @@ namespace fragdock {
     // koko ayashii kamo
     tri[0] = 0;
     tri[1] = 1;
+    if (! isRenumbered()) {
+      throw std::runtime_error("Fragment::settri() : Renumbering is required.");
+    }
     for (int i = 0; i < size(); ++i) {
       assert(atoms[i].getId() == i); /* assumption: already renumbered */
     }
