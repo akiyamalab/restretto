@@ -24,7 +24,7 @@ namespace fragdock {
     tri[0] = 0;
     tri[1] = 1;
     for (int i = 0; i < size(); ++i) {
-      assert(atoms[i].getId() == i);
+      assert(atoms[i].getId() == i); /* assumption: already renumbered */
     }
 
     // fltype minrad = 1e6;
@@ -53,30 +53,20 @@ namespace fragdock {
         }
       }
     }
-    // logs::lout << tri[0] << " " << tri[1] << " " << tri[2] << std::endl;
   }
 
-  void Fragment::settri(const Fragment& temp) {
-    tri[0] = temp.tri[0];
-    tri[1] = temp.tri[1];
-    tri[2] = temp.tri[2];
-  }
-
-  /* Calculate rotation status of this pose */
   Vector3d Fragment::getRot() {
-    fltype theta, phi, psi;
-    getNormalizeRot(theta, phi, psi);
+    calculateNormalizeRot();
     return Vector3d(-psi, -phi, -theta);
   }
 
-  void Fragment::getNormalizeRot(fltype& theta, fltype& phi, fltype& psi) {
-    assert(tri[0] != -1);
+  void Fragment::calculateNormalizeRot() {
+    if (theta != 0 || phi != 0 || psi != 0) return; // already calculated
+    if (tri[0] == -1 && tri[1] == -1 && tri[2] == -1) settri(); // a triplet of atoms must be determined
+
     Vector3d mv = atoms[tri[0]];
     translate(-mv);
     assert((tri[1] == -1) == (size() == 1));
-    theta = 0;
-    phi = 0;
-    psi = 0;
     if (tri[1] == -1) {}
     else if (tri[2] == -1) {
       Vector3d& vec = atoms[tri[1]];
@@ -97,13 +87,15 @@ namespace fragdock {
       // rotate(theta, phi, psi);
     }
     translate(mv);
+    return;
   }
 
   void Fragment::normalize_pose() {
-    fltype theta, phi, psi;
-    getNormalizeRot(theta, phi, psi);
-    // translate(-atoms[tri[0]]);
+    // translation
     translate(-getCenter());
+
+    // rotation
+    calculateNormalizeRot();
     rotate(theta, phi, psi);
   }
 

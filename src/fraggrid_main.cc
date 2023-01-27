@@ -327,7 +327,6 @@ int main(int argc, char **argv){
         frag_importance[fragmap[frag_smiles]] += temp.size();
       }
       else {
-        temp.settri();
         temp.normalize_pose();
         temp.settempind(ftmpsz);
         fragtemps.push_back(temp);
@@ -337,8 +336,6 @@ int main(int argc, char **argv){
         ++ftmpsz;
         minimum_cost += temp.size();
       }
-      mol_frag.settri(temp);
-      // frag.setrotid(rotations);
       mol_frag.settempind(temp.gettempind());
 
       fragvecs[l_ind].append(fragvec(mol_frag.getCenter(), mol_frag.gettempind(), mol_frag.size()));

@@ -8,24 +8,20 @@ namespace fragdock {
   class Fragment : public Molecule {
     int id;
     int tri[3] = { -1, -1, -1 };
-    // int rotid;
-    int tempind;
+    fltype theta = 0, phi = 0, psi = 0;
+    int tempind; /* TODO: Is it needed? */
+    /* Determine three atoms which will be used to define normal rotation */
+    void settri();
+    /* Calculate rotation status [theta, phi, psi] of this pose */
+    void calculateNormalizeRot();
   public:
     Fragment(int id, const std::vector<Atom> &atoms);
     Fragment() {};
     int getId() const { return id; }
     int gettri(int i) const { return tri[i]; }
 
-    /* Determine three atoms which will be used to define normal rotation */
-    void settri();
-    /** 
-     * Determine three atoms which will be used to define normal rotation 
-     * Just copying from another Fragment object
-     */
-    void settri(const Fragment& temp);
-
+    /* Get rotation status of this pose. If it is not calculated, calculate it. */
     Vector3d getRot();
-    void getNormalizeRot(fltype& theta, fltype& phi, fltype& psi);
 
     /* normalize position and rotation */
     void normalize_pose();
