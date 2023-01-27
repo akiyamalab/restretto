@@ -196,7 +196,7 @@ int main(int argc, char **argv){
     Molecule& mol = ligands_mol[lig_ind];
 
     mol.deleteHydrogens();
-    mol.setIntraEnergy(calc.getIntraEnergy(mol));
+    mol.setIntraEnergy(calc.calcIntraEnergy(mol));
 
     // mol.deleteHydrogens();
     // mol.calcRadius();

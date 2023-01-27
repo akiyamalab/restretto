@@ -24,11 +24,11 @@ namespace fragdock {
           fltype d = r - rad;
 
           pre_calculated_energy[(t1 * XS_TYPE_SIZE + t2) * SZ + i]
-              = (-0.035579) * gauss1(t1, t2, d)
-              + (-0.005156) * gauss2(t1, t2, d)
-              + ( 0.840245) * repulsion(t1, t2, d)
-              + (-0.035069) * hydrophobic(t1, t2, d)
-              + (-0.587439) * Hydrogen(t1, t2, d);
+              = term_weights[0] * gauss1(t1, t2, d)
+              + term_weights[1] * gauss2(t1, t2, d)
+              + term_weights[2] * repulsion(t1, t2, d)
+              + term_weights[3] * hydrophobic(t1, t2, d)
+              + term_weights[4] * hydrogenBond(t1, t2, d);
         }
       }
     }
@@ -69,7 +69,7 @@ namespace fragdock {
     return pre_calculated_energy[(t1 * XS_TYPE_SIZE + t2) * SZ + idx];
   }
 
-  fltype EnergyCalculator::getIntraEnergy(const Molecule &ligand) const {
+  fltype EnergyCalculator::calcIntraEnergy(const Molecule &ligand) const {
     fltype sum_energy = 0.0;
     std::vector<std::vector<int>> dist = ligand.getGraphDistances();
     for (int i = 0; i < ligand.size(); i++) {
@@ -111,7 +111,7 @@ namespace fragdock {
     return ((d >= 1.5) ? 0.0 : ((d <= 0.5) ? 1.0 : 1.5 - d));
   }
 
-  fltype EnergyCalculator::Hydrogen(int t1, int t2, fltype d) {
+  fltype EnergyCalculator::hydrogenBond(int t1, int t2, fltype d) {
     if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
     if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
     if (!xs_hbond(t1, t2)) return 0;
@@ -186,7 +186,7 @@ namespace fragdock {
     }
     return sum_energy;
   }
-  fltype EnergyCalculator::Hydrogen(const Molecule &ligand, const Molecule &receptor) {
+  fltype EnergyCalculator::hydrogenBond(const Molecule &ligand, const Molecule &receptor) {
     fltype sum_energy = 0.0;
     for (const Atom& la : ligand.getAtoms()) {
       if (la.getXSType() == XS_TYPE_H || la.getXSType() == XS_TYPE_DUMMY) continue;
@@ -198,7 +198,7 @@ namespace fragdock {
         fltype r = (la - ra).abs();
         if (r > THRESHOLD) continue;
         fltype d = r - xs_radius(t1) - xs_radius(t2);
-        sum_energy += Hydrogen(t1, t2, d);
+        sum_energy += hydrogenBond(t1, t2, d);
       }
     }
     return sum_energy;

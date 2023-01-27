@@ -303,8 +303,9 @@ int main(int argc, char **argv){
     Molecule& mol_ligand = ligands_mol[l_ind];
 
     mol_ligand.deleteHydrogens();
-    fltype intra = ene_calculator.getIntraEnergy(mol_ligand);
-    mol_ligand.setIntraEnergy(intra);
+    mol_ligand.setIntraEnergy(
+      ene_calculator.calcIntraEnergy(mol_ligand)
+    );
 
     vector<Fragment> fragments = DecomposeMolecule(mol_ligand);
 
