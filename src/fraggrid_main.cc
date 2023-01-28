@@ -316,8 +316,7 @@ int main(int argc, char **argv){
       { // renumbering and setting smiles to mol_frag
         OpenBabel::OBMol ob_frag = format::toOBMol(mol_frag, ob_ligand);
         mol_frag.setSmiles(OpenBabel::canonicalSmiles(ob_frag));
-        vector<uint> canon_labels; /* atom indices ordered canonically */
-        OpenBabel::getRenumber(ob_frag, canon_labels);
+        const vector<uint> canon_labels = OpenBabel::getRenumber(ob_frag); /* atom indices ordered canonically */
         mol_frag.renumbering(mol_frag.size(), canon_labels);
       } // destuct object ob_frag
 

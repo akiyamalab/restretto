@@ -171,17 +171,19 @@ namespace OpenBabel{
   }
 
   /**
-   * Determine the canonical order indice of atoms in the molecule.
+   * Determine the canonical order indices of atoms in the molecule.
    * @param[in] mol the molecule
-   * @param[out] canon_labels the canonical order indice of atoms in the molecule
+   * @return The canonical order indices of atoms in the molecule
   */
-  void getRenumber(OpenBabel::OBMol& mol, std::vector<unsigned int>& canon_labels) {
+  std::vector<uint> getRenumber(OpenBabel::OBMol& mol) {
+    std::vector<uint> canon_labels;
     OpenBabel::OBMol * pmol = &mol;
     std::vector<unsigned int> symmetry_classes;
     OpenBabel::OBGraphSym gs(pmol);
     gs.GetSymmetry(symmetry_classes);
 
     OpenBabel::CanonicalLabels(pmol, symmetry_classes, canon_labels);
+    return canon_labels;
   }
 
   void UpdateCoords(OpenBabel::OBMol& mol, const fragdock::Molecule& ref_mol){
