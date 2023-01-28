@@ -9,6 +9,7 @@ namespace fragdock {
     int tri[3] = { -1, -1, -1 };
     fltype theta = 0, phi = 0, psi = 0;
     int idx; /* TODO: Is it needed? */
+    std::string smiles;
     /* Determine three atoms which will be used to define normal rotation */
     void settri();
     /* Calculate rotation status [theta, phi, psi] of this pose */
@@ -26,6 +27,8 @@ namespace fragdock {
 
     void setIdx(int i) { idx = i; }
     int getIdx() const { return idx; }
+    void setSmiles(const std::string &s) { smiles = s; }
+    const std::string &getSmiles() const { return smiles; }
 
   };
 }

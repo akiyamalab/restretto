@@ -308,32 +308,34 @@ int main(int argc, char **argv){
 
 
   for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
-    OpenBabel::OBMol&  ob_ligand = ligands[l_ind];
-    Molecule&         mol_ligand = ligands_mol[l_ind];
-    vector<Fragment>&  fragments = fragments_of_ligands[l_ind];
+    OpenBabel::OBMol&  ob_ligand  = ligands[l_ind];
+    Molecule&          mol_ligand = ligands_mol[l_ind];
+    vector<Fragment>&  fragments  = fragments_of_ligands[l_ind];
 
     for (Fragment& mol_frag : fragments) {
-      OpenBabel::OBMol ob_frag = format::toOBMol(mol_frag, ob_ligand);
-      const string frag_smiles = OpenBabel::canonicalSmiles(ob_frag);
+      { // renumbering and setting smiles to mol_frag
+        OpenBabel::OBMol ob_frag = format::toOBMol(mol_frag, ob_ligand);
+        mol_frag.setSmiles(OpenBabel::canonicalSmiles(ob_frag));
+        vector<uint> canon_labels; /* atom indices ordered canonically */
+        OpenBabel::getRenumber(ob_frag, canon_labels);
+        mol_frag.renumbering(mol_frag.size(), canon_labels);
+      } // destuct object ob_frag
 
-      vector<uint> canon_labels; /* atom indices ordered canonically */
-      OpenBabel::getRenumber(ob_frag, canon_labels);
-      mol_frag.renumbering(mol_frag.size(), canon_labels);
+      if (fragmap.count(mol_frag.getSmiles())) {
+        uint frag_idx = fragmap[mol_frag.getSmiles()];
+        mol_frag.setIdx(frag_idx);
+        frag_importance[frag_idx] += mol_frag.size();
+      } else {
+        uint frag_idx = frag_library.size();
+        mol_frag.setIdx(frag_idx);
+        fragmap[mol_frag.getSmiles()] = frag_idx;
 
-      Fragment temp = mol_frag;
-      if (fragmap.count(frag_smiles)) {
-        temp = frag_library[fragmap[frag_smiles]];
-        frag_importance[fragmap[frag_smiles]] += temp.size();
-      }
-      else {
+        Fragment temp = mol_frag;
         temp.normalize_pose();
-        temp.setIdx(frag_library.size());
         frag_library.push_back(temp);
-        fragmap[frag_smiles] = temp.getIdx();
 
         frag_importance.push_back(0);
       }
-      mol_frag.setIdx(temp.getIdx());
 
       fragvecs[l_ind].append(fragvec(mol_frag.getCenter(), mol_frag.getIdx(), mol_frag.size()));
 
