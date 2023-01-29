@@ -129,11 +129,8 @@ namespace {
   //   return search_num / 2 + (k - score_num / 2) / ratio;
   // }
 
-  int to_score_num(int k, int score_num, int search_num, int ratio) {
-    // assert(score_num >= search_num);
-    // assert(0 <= k && k < search_num);
-    // assert(0 <= score_num / 2 + (k - search_num / 2) * ratio && score_num / 2 + (k - search_num / 2) * ratio < score_num);
-    return score_num / 2 + (k - search_num / 2) * ratio;
+  fragdock::Point3d<int> to_score_num(int k, const fragdock::Point3d<int>& score_num, const fragdock::Point3d<int>& search_num, const fragdock::Point3d<int>& ratio) {
+    return score_num / 2 + (-search_num / 2 + k) * ratio;
   }
 
   void inverse(std::vector<int>& v) {
@@ -148,6 +145,12 @@ namespace {
     }
   }
 
+  fragdock::Vector3d operator/(fragdock::Vector3d v, fragdock::Point3d<fltype> p){
+    return fragdock::Vector3d(v.x/p.x, v.y/p.y, v.z/p.z);
+  }
+  fragdock::Point3d<int> round(const fragdock::Vector3d& v) {
+    return fragdock::Point3d<int>(std::round(v.x), std::round(v.y), std::round(v.z));
+  }
 } // namespace
 
 namespace fragdock {
@@ -405,9 +408,6 @@ int main(int argc, char **argv){
   // vector<priority_queue<pos_param> > q(lig_map.size());
   vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(NUM_POSES_PER_LIGAND_BEFORE_OPT));
 
-  int gsx = to_score_num(0, score_num.x, search_num.x, ratio.x);
-  int gsy = to_score_num(0, score_num.y, search_num.y, ratio.y);
-  int gsz = to_score_num(0, score_num.z, search_num.z, ratio.z);
 
   logs::lout << logs::info << "[TIME STAMP] START CALCULATING BY FRAGGRID" << endl;
 
@@ -430,9 +430,7 @@ int main(int argc, char **argv){
       fv.rotate(rotations_ligand, rotid);
 
       for (int j = 0; j < sz; ++j) {
-        d[rotid][j].x = utils::round(fv.getvec(j).pos.x / config.grid.score_pitch.x);
-        d[rotid][j].y = utils::round(fv.getvec(j).pos.y / config.grid.score_pitch.y);
-        d[rotid][j].z = utils::round(fv.getvec(j).pos.z / config.grid.score_pitch.z);
+        d[rotid][j] = round(fv.getvec(j).pos / config.grid.score_pitch);
       }
     }
 
@@ -489,10 +487,10 @@ int main(int argc, char **argv){
       #pragma omp parallel for // Calculation among rotation is independent
       for (int rotid = 0; rotid < rotsz; ++rotid) {
         // int rid = RotMatrix[fragvecs[lig_ind].getvec(j).rotid][rotid];
-
-        for (int x = 0, gx = gsx; x < search_num.x; ++x, gx += ratio.x)
-        for (int y = 0, gy = gsy; y < search_num.y; ++y, gy += ratio.y)
-        for (int z = 0, gz = gsz; z < search_num.z; ++z, gz += ratio.z)
+        Point3d<int> gs = to_score_num(0, score_num, search_num, ratio);
+        for (int x = 0, gx = gs.x; x < search_num.x; ++x, gx += ratio.x)
+        for (int y = 0, gy = gs.y; y < search_num.y; ++y, gy += ratio.y)
+        for (int z = 0, gz = gs.z; z < search_num.z; ++z, gz += ratio.z)
           scores[rotid].addEnergy(x, y, z, fg.getGrid().getEnergy(gx + d[rotid][j].x, gy + d[rotid][j].y, gz + d[rotid][j].z));
       }
     }

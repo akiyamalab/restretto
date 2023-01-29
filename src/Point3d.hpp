@@ -1,8 +1,8 @@
 #include "common.hpp"
 #include "utils.hpp"
 
-#ifndef _POINT3D_H_
-#define _POINT3D_H_
+#ifndef POINT3D_H_
+#define POINT3D_H_
 
 namespace fragdock {
   template<class T>
@@ -38,6 +38,9 @@ namespace fragdock {
     }
     auto operator/(const T& o) const -> Point3d<decltype(x/o)> {
       return Point3d<decltype(x/o)>(x/o, y/o, z/o);
+    }
+    auto operator-() const -> Point3d<decltype(-x)> {
+      return Point3d<decltype(-x)>(-x, -y, -z);
     }
   };
 }

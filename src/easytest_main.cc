@@ -41,10 +41,9 @@ namespace {
 
     if (!vmap.count("conf-file") || vmap.count("help")){
       if (!vmap.count("conf-file") && !vmap.count("help")){
-	std::cout << "too few arguments" << std::endl;
+      	std::cout << "too few arguments" << std::endl;
       }
-      std::cout << "Usage: ligandock conf-file [options]\n"
-		<< options << std::endl;
+      std::cout << "Usage: ligandock conf-file [options]\n" << options << std::endl;
       std::exit(0);
     }
     format::DockingConfiguration conf = format::ParseInFile(vmap["conf-file"].as<std::string>().c_str());
