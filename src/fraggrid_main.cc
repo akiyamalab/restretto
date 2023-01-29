@@ -64,6 +64,7 @@ namespace {
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
+    conf.checkConfigValidity();
     return conf;
   }
 
@@ -194,7 +195,7 @@ int main(int argc, char **argv){
   logConfig(config);
 
   // parse receptor file
-  OpenBabel::OBMol receptor = format::ParseFileToOBMol(config.receptor_file.c_str())[0];
+  const OpenBabel::OBMol receptor = format::ParseFileToOBMol(config.receptor_file.c_str())[0];
   Molecule receptor_mol = format::toFragmentMol(receptor);
 
   // parse ligands file
@@ -211,35 +212,11 @@ int main(int argc, char **argv){
   logs::lout << logs::info << "[ end ] read energy grids" << endl;
   // logs::lout << "atom grid size: " << atom_grids.size() << endl;
 
-  vector<Vector3d> rotations_ligand;
-  vector<Vector3d> rotations_fragment;
-  if (config.rotangs_file.length()) {
-    logs::lout << logs::info << "[start] read rotations" << endl;
-    rotations_ligand = readRotations(config.rotangs_file);
-    logs::lout << logs::info << "[ end ] read rotations" << endl;
-    logs::lout << logs::info << "[start] make rotations" << endl;
-    rotations_fragment = makeRotations60();
-    logs::lout << logs::info << "[ end ] make rotations" << endl;
-  }
-  else {
-    logs::lout << logs::info << "[start] make rotations" << endl;
-    rotations_ligand = makeRotations60();
-    rotations_fragment = rotations_ligand;
-    logs::lout << logs::info << "[ end ] make rotations" << endl;
-  }
-
   // # of grid points of score grids (atom grids, fragment grids)
   const Point3d<int>& score_num = atom_grids[0].getNum();
-
   // how many search grid points are included into score grid interval
   // ex) search_pitch=2, score_pitch=1 -> ratio=2
   const Point3d<int> ratio = utils::round(config.grid.search_pitch / config.grid.score_pitch);
-
-  // check whether the ratios are integer or not.
-  assert(abs(config.grid.score_pitch.x * ratio.x - config.grid.search_pitch.x) < EPS);
-  assert(abs(config.grid.score_pitch.y * ratio.y - config.grid.search_pitch.y) < EPS);
-  assert(abs(config.grid.score_pitch.z * ratio.z - config.grid.search_pitch.z) < EPS);
-
   const Point3d<fltype>& search_pitch = config.grid.search_pitch;
   // # of search grid points (conformer scoring)
   const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1;
@@ -250,23 +227,15 @@ int main(int argc, char **argv){
   // The number how many fragment grids can be stored in memory.
   // It affects reuse of fragment grids.
   int FGRID_SIZE = (int)((config.mem_size * 1024 * 1024) / ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype)));
-  if (FGRID_SIZE < 1) {
-    logs::lout << logs::error << "Memory size is too small to load a fragment grid." << endl;
-    logs::lout << logs::error << "Memory size of " << ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype) / 1024 / 1024) + 1 << " MB is at least needed." << endl;
-    throw std::runtime_error("Memory size is too small to load a fragment grid.");
-  }
   if (config.reuse_grid == format::DockingConfiguration::REUSE_NONE) {
     FGRID_SIZE = 1;
   }
   logs::lout << logs::info << "fragment grids storage size : " << FGRID_SIZE << endl;
 
   vector<FragmentsVector> fragvecs(ligs_sz); /* a vector of fragment vectors which correspond to ligands */
-
   vector<Fragment> frag_library; /* list of unique fragments which poses are normalized*/
-
   vector<int> frag_importance; /* # fragment heavy atoms * fragment occurrence */
   unordered_map<string, uint> fragmap; /* a map of {smiles -> an index of a fragment list} */
-
   unordered_map<string, uint> lig_map; /* smiles -> an index of a unique ligand list */
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;

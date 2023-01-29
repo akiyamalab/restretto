@@ -5,6 +5,7 @@
 
 #ifndef INFILE_READER_H_
 #define INFILE_READER_H_
+
 namespace format {
   struct SearchGrid {
     fragdock::Point3d<fltype> center, outer_width, inner_width, search_pitch, score_pitch;
@@ -31,6 +32,7 @@ namespace format {
       }
       assert(0);
     }
+    void checkConfigValidity() const;
   };
 
   DockingConfiguration ParseInFile(const char *filename);

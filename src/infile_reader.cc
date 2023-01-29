@@ -129,6 +129,19 @@ namespace format {
         conf.rotangs_file = buffer.substr(8);
       }
     }
+
     return conf;
+  }
+  void DockingConfiguration::checkConfigValidity() const {
+    // ratio of search_pitch and score_pitch must be integer
+    const fragdock::Point3d<int> ratio = utils::round(grid.search_pitch / grid.score_pitch);
+    assert(abs(grid.score_pitch.x * ratio.x - grid.search_pitch.x) < EPS);
+    assert(abs(grid.score_pitch.y * ratio.y - grid.search_pitch.y) < EPS);
+    assert(abs(grid.score_pitch.z * ratio.z - grid.search_pitch.z) < EPS);
+
+    // memory size must be enough to store at least ONE grid
+    const fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / grid.score_pitch) * 2 + 1; // # of grid points per axis
+    int FGRID_SIZE = (int)((mem_size * 1024 * 1024) / ((int64_t) num.x * num.y * num.z * sizeof(fltype))); // # of grids that can be stored in memory
+    assert(FGRID_SIZE > 0);
   }
 } // namespace format
