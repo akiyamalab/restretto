@@ -40,7 +40,7 @@ namespace fragdock {
     Vector3d operator+(const Vector3d &o) const { return Vector3d(x+o.x, y+o.y, z+o.z); }
     Vector3d operator+=(const Vector3d &o) { x += o.x; y += o.y; z += o.z; return *this; }
     Vector3d operator*(const fltype o) const { return Vector3d(x*o, y*o, z*o); }
-    Vector3d operator*=(const fltype o) { x *= o, y *= o, z *= o; return Vector3d(x*o, y*o, z*o); }
+    Vector3d operator*=(const fltype o) { x *= o, y *= o, z *= o; return *this; }
     Vector3d operator/(const fltype o) const { return *this*(1.0/o); }
     Vector3d operator/=(const fltype o) { x /= o, y /= o, z /= o; return *this; }
     Vector3d operator-() const { return Vector3d(-x, -y, -z); }
