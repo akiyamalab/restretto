@@ -1,4 +1,3 @@
-#include "common.hpp"
 #include "FragmentEnergyGrid.hpp"
 
 namespace fragdock {

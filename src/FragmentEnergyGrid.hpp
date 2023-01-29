@@ -3,6 +3,7 @@
 // #include "EnergyCalculator.hpp"
 #include "AtomEnergyGrid.hpp"
 #include "Fragment.hpp"
+#include "Point3d.hpp"
 
 #ifndef FRAGMENT_ENERGY_GRID_H_
 #define FRAGMENT_ENERGY_GRID_H_
