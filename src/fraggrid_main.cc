@@ -98,7 +98,7 @@ namespace {
     bool operator>(const pos_param& o) const { return score > o.score; }
   };
 
-  std::vector<MCFP::node> makeGraph(const std::vector<fragdock::FragmentsVector>& frags, const std::vector<int>& sorted_lig, int fsize, int& reduce) {
+  std::vector<MCFP::node> makeGraph(const std::vector<fragdock::FragmentsVector>& frags, const std::vector<int>& sorted_lig, int fsize) {
     int sz = 0;
     for (auto& i : frags) {
       sz += i.size();
@@ -110,7 +110,6 @@ namespace {
       for (auto& j : frags[sorted_lig[i]].getvecs()) {
         int id = j.frag_idx;
         if (before[id] == c) {
-          reduce += j.size;
           ret[c] = MCFP::node(c, 0);
         }
         else if (before[id] != -1)
@@ -196,7 +195,7 @@ int main(int argc, char **argv){
 
   // parse receptor file
   const OpenBabel::OBMol receptor = format::ParseFileToOBMol(config.receptor_file.c_str())[0];
-  Molecule receptor_mol = format::toFragmentMol(receptor);
+  const Molecule receptor_mol = format::toFragmentMol(receptor);
 
   // parse ligands file
   vector<OpenBabel::OBMol> ligands = format::ParseFileToOBMol(config.ligand_files);
@@ -212,15 +211,12 @@ int main(int argc, char **argv){
   logs::lout << logs::info << "[ end ] read energy grids" << endl;
   // logs::lout << "atom grid size: " << atom_grids.size() << endl;
 
-  // # of grid points of score grids (atom grids, fragment grids)
-  const Point3d<int>& score_num = atom_grids[0].getNum();
+  const Point3d<int>& score_num = atom_grids[0].getNum(); // # of grid points of score grids (atom grids, fragment grids)
   // how many search grid points are included into score grid interval
   // ex) search_pitch=2, score_pitch=1 -> ratio=2
   const Point3d<int> ratio = utils::round(config.grid.search_pitch / config.grid.score_pitch);
   const Point3d<fltype>& search_pitch = config.grid.search_pitch;
-  // # of search grid points (conformer scoring)
-  const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1;
-
+  const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1; // # of search grid points (conformer scoring)
   const EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
 
@@ -235,7 +231,6 @@ int main(int argc, char **argv){
   vector<FragmentsVector> fragvecs(ligs_sz); /* a vector of fragment vectors which correspond to ligands */
   vector<Fragment> frag_library; /* list of unique fragments which poses are normalized*/
   vector<int> frag_importance; /* # fragment heavy atoms * fragment occurrence */
-  unordered_map<string, uint> fragmap; /* a map of {smiles -> an index of a fragment list} */
   unordered_map<string, uint> lig_map; /* smiles -> an index of a unique ligand list */
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;
@@ -283,6 +278,10 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "[TIME STAMP] START FRAGMENT SET PREPARATION" << endl;
+  // MEMO:
+  //   Input -> ligands, fragments_of_ligands, 
+  //   Output -> frag_importance, frag_library, fragvecs
+  unordered_map<string, uint> fragmap; /* a map of {smiles -> an index of a fragment list} */
   for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
     //TODO: ligands, ligands_mol, fragments_of_ligands should be merged into one object (LigandLibrary singleton?)
     const OpenBabel::OBMol& ob_ligand  = ligands[l_ind];
@@ -329,13 +328,14 @@ int main(int argc, char **argv){
   }
 
   // ---- use in REUSE_GRID_OFFLINE only ----
-  vector<int> nextgridsp;
-  int pred_reduce = 0;
+  vector<int> nextgridsp; // indices where the next grid is stored
   // ----------------------------------------
 
   logs::lout << logs::info << "[TIME STAMP] START REORDERING AND SOLVING MCFP" << endl;
 
+  // Reordering ligands though it is not optimal
   if (config.reorder) {
+    // set importance ranking of fragments
     vector<int> fragrank(frag_library.size());
     for (int i = 0; i < frag_library.size(); ++i) {
       fragrank[i] = i;
@@ -343,16 +343,18 @@ int main(int argc, char **argv){
     sort(fragrank.begin(), fragrank.end(), [&](const int& a, const int& b){ return frag_importance[a] > frag_importance[b]; });
     inverse(fragrank);
 
+    // set ranking of fragments in each ligand
     for (int i = 0; i < ligs_sz; ++i) {
       fragvecs[i].sort(fragrank);
     }
+    // reorder ligands by the ranking of fragments
     sort(sorted_lig.begin(), sorted_lig.end(), [&](const int& a, const int& b){ return fragvecs[a] < fragvecs[b]; });
   }
 
   if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE) {
-    vector<MCFP::node> graph = makeGraph(fragvecs, sorted_lig, frag_library.size(), pred_reduce);
+    vector<MCFP::node> graph = makeGraph(fragvecs, sorted_lig, frag_library.size());
 
-    pred_reduce += MCFP::runLeftBackSSP(graph, FGRID_SIZE, nextgridsp);
+    MCFP::runLeftBackSSP(graph, FGRID_SIZE, nextgridsp);
     // cerr << "predict reduce cost : " << pred_reduce << endl;
   }
 
@@ -578,12 +580,7 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] END OPTIMIZING AND RANKING" << endl;
 
-  // logs::lout << "predict reduce cost : " << pred_reduce << endl;
   logs::lout << "real reduce cost    : " << reduces << endl;
-  // cerr << "real reduce cost    : " << reduces << endl;
-  assert(config.reuse_grid != format::DockingConfiguration::REUSE_OFFLINE || reduces == pred_reduce);
-
-  // OpenBabel::outputOBMolsToSDF(config.output_file, outputobmols);
 
   logs::lout << logs::info << "################ Program end ################" << endl;
 
