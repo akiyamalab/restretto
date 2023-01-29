@@ -486,7 +486,7 @@ int main(int argc, char **argv){
       assert(fragment_grids[nextsp].frag_idx == fragid);
       const FragmentEnergyGrid& fg = fragment_grids[nextsp];
 
-      // #pragma omp parallel for
+      #pragma omp parallel for // Calculation among rotation is independent
       for (int rotid = 0; rotid < rotsz; ++rotid) {
         // int rid = RotMatrix[fragvecs[lig_ind].getvec(j).rotid][rotid];
 
