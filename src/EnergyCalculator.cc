@@ -99,8 +99,9 @@ namespace fragdock {
   }
 
   fltype EnergyCalculator::repulsion(int t1, int t2, fltype d) {
-    if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
-    if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
+    // NOTE: repulsion term should be considered even for DUMMY atoms
+    // if (t1 == XS_TYPE_H || t1 == XS_TYPE_DUMMY) return 0;
+    // if (t2 == XS_TYPE_H || t2 == XS_TYPE_DUMMY) return 0;
     return (d > 0 ? 0.0 : sqr(d));
   }
 
