@@ -108,7 +108,7 @@ int main(int argc, char **argv){
 
   //Making energyGrid
   for(int xs_type = 0; xs_type < XS_TYPE_SIZE; xs_type++){
-    logs::lout << logs::info << "Prepare energy grid. " << xs_strings[xs_type];
+    logs::lout << logs::info << "Prepare energy grid. " << xs_strings[xs_type] << std::endl;
 
     //prepare energy_grid
     // const fltype MARGIN = 10;
@@ -120,15 +120,15 @@ int main(int argc, char **argv){
     const fragdock::Point3d<fltype>& pitch = grid.score_pitch;
     fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / pitch) * 2 + 1;
 
-    logs::lout << logs::info << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type];
+    logs::lout << logs::debug << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type] << std::endl;
     fragdock::AtomEnergyGrid energy_grid(center, pitch, num, xs_type);
-    logs::lout << logs::info << "Start calculation of each point. " << xs_strings[xs_type];
+    logs::lout << logs::debug << "Start calculation of each point. " << xs_strings[xs_type] << std::endl;
     makeEnergyGrid(energy_grid, receptor_mol, calc);
 
-    logs::lout << logs::info << "Make energy grid file. " << xs_strings[xs_type];
+    logs::lout << logs::debug << "Make energy grid file. " << xs_strings[xs_type] << std::endl;
     std::string filename = conf.grid_folder + "/" + xs_strings[xs_type] + ".grid";
     energy_grid.writeFile(filename);
-    logs::lout << logs::info << "Making grid file has done. " << xs_strings[xs_type];
+    logs::lout << logs::info << "Making grid file has done. " << xs_strings[xs_type] << std::endl;
   }
 
   return 0;
