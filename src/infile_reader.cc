@@ -6,6 +6,7 @@
 #include <boost/lexical_cast.hpp>
 #include "infile_reader.hpp"
 
+
 namespace format {
   DockingConfiguration ParseInFile(const char *filename){
     std::ifstream ifs(filename);
@@ -24,9 +25,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.outer_width_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.outer_width_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.outer_width_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.outer_width = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "INNERBOX ")) {
         std::string str = buffer.substr(9);
@@ -35,9 +37,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.inner_width_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.inner_width_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.inner_width_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.inner_width = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "BOX_CENTER ")) {
         std::string str = buffer.substr(11);
@@ -46,9 +49,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.cx = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.cy = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.cz = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.center = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "SEARCH_PITCH ")) {
         std::string str = buffer.substr(13);
@@ -57,9 +61,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.search_pitch_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.search_pitch_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.search_pitch_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.search_pitch = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "SCORING_PITCH ")) {
         std::string str = buffer.substr(14);
@@ -68,9 +73,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.score_pitch_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.score_pitch_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.score_pitch_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.score_pitch = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "REUSE_FRAG_GRID ")) {
         std::string str = buffer.substr(16);

@@ -113,14 +113,12 @@ int main(int argc, char **argv){
     //prepare energy_grid
     // const fltype MARGIN = 10;
     // const fltype DEFAULT_PITCH = 0.25; // (atomtypes[i]=="e") ? 0.5 : 0.25;
-    fltype width_x = grid.outer_width_x;
-    fltype width_y = grid.outer_width_y;
-    fltype width_z = grid.outer_width_z;
-    fragdock::Point3d<fltype> center(grid.cx, grid.cy, grid.cz);
-    fragdock::Point3d<fltype> pitch(grid.score_pitch_x, grid.score_pitch_y, grid.score_pitch_z);
-    fragdock::Point3d<int> num(utils::ceili(width_x / 2 / pitch.x) * 2 + 1,
-                               utils::ceili(width_y / 2 / pitch.y) * 2 + 1,
-                               utils::ceili(width_z / 2 / pitch.z) * 2 + 1);
+    fltype width_x = grid.outer_width.x;
+    fltype width_y = grid.outer_width.y;
+    fltype width_z = grid.outer_width.z;
+    const fragdock::Point3d<fltype>& center = grid.center;
+    const fragdock::Point3d<fltype>& pitch = grid.score_pitch;
+    fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / pitch) * 2 + 1;
 
     logs::lout << logs::info << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type];
     fragdock::AtomEnergyGrid energy_grid(center, pitch, num, xs_type);

@@ -44,7 +44,7 @@ namespace utils {
 
   /**
   * @param[in] val a real value
-  * @return integer a rounded value
+  * @return integer a ceiled value
   */
   int ceili(fltype val);
 

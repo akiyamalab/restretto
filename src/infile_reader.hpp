@@ -1,4 +1,5 @@
 #include "common.hpp"
+#include "EnergyGrid.hpp"
 #include <string>
 #include <vector>
 
@@ -6,11 +7,7 @@
 #define INFILE_READER_H_
 namespace format {
   struct SearchGrid {
-    fltype cx, cy, cz;
-    fltype outer_width_x, outer_width_y, outer_width_z;
-    fltype inner_width_x, inner_width_y, inner_width_z;
-    fltype search_pitch_x, search_pitch_y, search_pitch_z;
-    fltype score_pitch_x, score_pitch_y, score_pitch_z;
+    fragdock::Point3d<fltype> center, outer_width, inner_width, search_pitch, score_pitch;
   };
 
   struct DockingConfiguration {
