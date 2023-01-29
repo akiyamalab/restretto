@@ -380,6 +380,15 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] START CALCULATING BY FRAGGRID" << endl;
 
+  // prepare rotation settings
+  vector<Vector3d> rotations_ligand;
+  if (config.rotangs_file.length()) {
+    rotations_ligand = readRotations(config.rotangs_file);
+  } else {
+    rotations_ligand = makeRotations60();
+  }
+  const vector<Vector3d> rotations_fragment = makeRotations60();
+
   for (int i = 0, frag_itr = 0; i < ligs_sz; ++i) {
     int lig_ind = sorted_lig[i];
     const Molecule& mol = ligands_mol[lig_ind];
