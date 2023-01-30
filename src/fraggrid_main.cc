@@ -226,7 +226,7 @@ int main(int argc, char **argv){
   // The number how many fragment grids can be stored in memory.
   // It affects reuse of fragment grids.
   int FGRID_SIZE = (int)((config.mem_size * 1024 * 1024) / ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype)));
-  if (config.reuse_grid == format::DockingConfiguration::REUSE_NONE) {
+  if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::NONE) {
     FGRID_SIZE = 1;
   }
   logs::lout << logs::info << "fragment grids storage size : " << FGRID_SIZE << endl;
@@ -354,7 +354,7 @@ int main(int argc, char **argv){
     sort(sorted_lig.begin(), sorted_lig.end(), [&](const int& a, const int& b){ return fragvecs[a] < fragvecs[b]; });
   }
 
-  if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE) {
+  if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::OFFLINE) {
     vector<MCFP::node> graph = makeGraph(fragvecs, sorted_lig, frag_library.size());
 
     MCFP::runLeftBackSSP(graph, FGRID_SIZE, nextgridsp);
@@ -423,8 +423,8 @@ int main(int argc, char **argv){
     for (int j = 0; j < sz; ++j, ++frag_itr) {
       int fragid = fragvecs[lig_ind].getvec(j).frag_idx;
       int nextsp = -1;
-      if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE || config.reuse_grid == format::DockingConfiguration::REUSE_NONE) {
-        if (config.reuse_grid == format::DockingConfiguration::REUSE_OFFLINE)
+      if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::OFFLINE || config.reuse_grid == format::DockingConfiguration::ReuseStrategy::NONE) {
+        if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::OFFLINE)
           nextsp = nextgridsp[frag_itr];
         else
           nextsp = 0;
@@ -436,7 +436,7 @@ int main(int argc, char **argv){
           reduces += fragvecs[lig_ind].getvec(j).size;
         }
       }
-      else if (config.reuse_grid == format::DockingConfiguration::REUSE_ONLINE) {
+      else if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::ONLINE) {
         if (fgrid_ind[fragid] == -1) {
           int mi = frag_itr;
           for (int k = 0; k < FGRID_SIZE; ++k) {

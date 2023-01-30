@@ -83,13 +83,13 @@ namespace format {
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         if (str == "false" || str == "none" || str == "noreuse") {
-          conf.reuse_grid = DockingConfiguration::REUSE_NONE;
+          conf.reuse_grid = DockingConfiguration::ReuseStrategy::NONE;
         }
         else if (str == "online") {
-          conf.reuse_grid = DockingConfiguration::REUSE_ONLINE;
+          conf.reuse_grid = DockingConfiguration::ReuseStrategy::ONLINE;
         }
         else {
-          conf.reuse_grid = DockingConfiguration::REUSE_OFFLINE;
+          conf.reuse_grid = DockingConfiguration::ReuseStrategy::OFFLINE;
         }
       }
       else if (boost::algorithm::starts_with(buffer, "REORDER_LIGANDS ")) {
