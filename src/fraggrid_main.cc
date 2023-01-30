@@ -1,6 +1,7 @@
 #include "common.hpp"
 #include "utils.hpp"
 #include "OBMol.hpp"
+#include "Point3d.hpp"
 #include "MoleculeToFragments.hpp"
 #include "infile_reader.hpp"
 #include "log_writer_stream.hpp"
@@ -89,11 +90,13 @@ namespace {
   }
 
   struct pos_param {
-    int rotid, x, y, z;
+    int rotid;
+    fragdock::Point3d<int> grid_pos;
     fltype score;
     int inp_ind;
-    pos_param() : rotid(-1), x(-1), y(-1), z(-1), score(INF_ENERGY), inp_ind(-1) {}
-    pos_param(int rotid, int x, int y, int z, fltype score, int inp_ind) : rotid(rotid), x(x), y(y), z(z), score(score), inp_ind(inp_ind) {}
+    pos_param() : rotid(-1), grid_pos(fragdock::Point3d<int>(-1, -1, -1)), score(INF_ENERGY), inp_ind(-1) {}
+    pos_param(int rotid, int x, int y, int z, fltype score, int inp_ind) :
+      rotid(rotid), grid_pos(fragdock::Point3d<int>(x, y, z)), score(score), inp_ind(inp_ind) {}
     bool operator<(const pos_param& o) const { return score < o.score; }
     bool operator>(const pos_param& o) const { return score > o.score; }
   };
@@ -376,7 +379,7 @@ int main(int argc, char **argv){
   std::chrono::milliseconds fgrid_time(0);
   std::chrono::milliseconds real_time(0);
 
-  // vector<priority_queue<pos_param> > q(lig_map.size());
+  // storing best poses for each ligand
   vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(NUM_POSES_PER_LIGAND_BEFORE_OPT));
 
 
@@ -400,6 +403,7 @@ int main(int argc, char **argv){
     int rotsz = rotations_ligand.size();
     int sz = fragvecs[lig_ind].size();
 
+    /* relative fragment positions (from center of a ligand) on the scoring grid for each rotation */
     vector<vector<Point3d<int> > > d(rotsz, vector<Point3d<int> >(sz));
 
     vector<EnergyGrid> scores(rotsz, EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
@@ -533,9 +537,9 @@ int main(int argc, char **argv){
     vector<pair<fltype, pair<int, Molecule> > > out_mols(poss.size());
     for (int j = 0; j < (int)poss.size(); j++) {
       const pos_param& param = poss[j];
+      const Vector3d pos = search_grid.convert(param.grid_pos);
       Molecule mol = ligands_mol[param.inp_ind];
       mol.rotate(rotations_ligand[param.rotid]);
-      Vector3d pos = search_grid.convert(param.x, param.y, param.z);
       mol.translate(pos);
       fltype opt_score = opt_grid.optimize(mol);
       // fltype opt_score = param.score;

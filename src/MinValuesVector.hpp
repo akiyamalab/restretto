@@ -5,6 +5,9 @@
 
 namespace utils{
 
+  /**
+   * @brief A class to store the minimum values of a vector.
+  */
   template <typename T>
   class MinValuesVector {
     int size, threthold;
@@ -16,6 +19,7 @@ namespace utils{
     }
 
   public:
+    /* @param size The number how many elements will be stored. */
     MinValuesVector(int size) : size(size), threthold(size * 2) {}
 
     void push(const T& x) {

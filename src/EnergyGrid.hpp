@@ -72,6 +72,8 @@ namespace fragdock {
 								      (y_ind - (num.y-1)/2)*pitch.y + center.y,
 								      (z_ind - (num.z-1)/2)*pitch.z + center.z); 
     }
+    /* convert grid point indices to a 3d coordinate */
+    Vector3d convert(const Point3d<int>& ind) const { return convert(ind.x, ind.y, ind.z); }
 
     /* Parse an energy grid data */
     void parse(std::ifstream& ifs);
