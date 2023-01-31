@@ -12,6 +12,7 @@
 #include "CalcMCFP.hpp"
 #include "Optimizer.hpp"
 #include "MinValuesVector.hpp"
+#include "FragmentEnergyGridContainer.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -363,17 +364,11 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] END REORDERING AND SOLVING MCFP" << endl;
 
-  vector<FragmentEnergyGrid> fragment_grids(FGRID_SIZE);
   EnergyGrid distance_grid = makeDistanceGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol);
-
-  // vector<vector<OpenBabel::OBMol> > outputobmols(lig_map.size());
 
   // Amount of calculation cost reduction by reusing fragment grid
   int reduces = 0;
 
-  // ---- use in REUSE_GRID_ONLINE only ----
-  vector<int> last_used(FGRID_SIZE, -1);
-  vector<int> fgrid_ind(frag_library.size(), -1);
   // ---------------------------------------
 
   std::chrono::milliseconds fgrid_time(0);
@@ -392,9 +387,17 @@ int main(int argc, char **argv){
   } else {
     rotations_ligand = makeRotations60();
   }
-  const vector<Vector3d> rotations_fragment = makeRotations60();
 
-  for (int i = 0, frag_itr = 0; i < ligs_sz; ++i) {
+  typedef format::DockingConfiguration::ReuseStrategy Strategy;
+  FragmentEnergyGridContainer frag_grid_container;
+  if (config.reuse_grid == Strategy::ONLINE)
+    frag_grid_container = FragmentEnergyGridContainer(FGRID_SIZE);
+  else if (config.reuse_grid == Strategy::OFFLINE) 
+    frag_grid_container = FragmentEnergyGridContainer(FGRID_SIZE, nextgridsp);
+  else // config.reuse_grid == Strategy::NONE
+    frag_grid_container = FragmentEnergyGridContainer(1);
+
+  for (int i = 0; i < ligs_sz; ++i) {
     int lig_ind = sorted_lig[i];
     const Molecule& mol = ligands_mol[lig_ind];
     const string& identifier = mol.getIdentifier();
@@ -420,53 +423,15 @@ int main(int argc, char **argv){
 
     auto t1 = std::chrono::system_clock::now();
 
-    for (int j = 0; j < sz; ++j, ++frag_itr) {
+
+    for (int j = 0; j < sz; ++j) {
       int fragid = fragvecs[lig_ind].getvec(j).frag_idx;
-      int nextsp = -1;
-      if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::OFFLINE || config.reuse_grid == format::DockingConfiguration::ReuseStrategy::NONE) {
-        if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::OFFLINE)
-          nextsp = nextgridsp[frag_itr];
-        else
-          nextsp = 0;
-
-        if (fragment_grids[nextsp].frag_idx != fragid) {
-          fragment_grids[nextsp] = FragmentEnergyGrid(frag_library[fragid], rotations_fragment, atom_grids, distance_grid);
-        }
-        else {
-          reduces += fragvecs[lig_ind].getvec(j).size;
-        }
-      }
-      else if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::ONLINE) {
-        if (fgrid_ind[fragid] == -1) {
-          int mi = frag_itr;
-          for (int k = 0; k < FGRID_SIZE; ++k) {
-            if (last_used[k] < mi) {
-              mi = last_used[k];
-              nextsp = k;
-            }
-          }
-          assert(nextsp != -1);
-          if (mi != -1) {
-            // logs::lout << logs::info << "remove id : " << fragment_grids[nextsp].frag_idx << " fragment grid in vector at " << nextsp << endl;
-            fgrid_ind[fragment_grids[nextsp].frag_idx] = -1;
-          }
-          // logs::lout << logs::info << "calc id : " << fragid << " fragment grid and store to vector at " << nextsp << endl;
-          fragment_grids[nextsp] = FragmentEnergyGrid(frag_library[fragid], rotations_fragment, atom_grids, distance_grid);
-          fgrid_ind[fragid] = nextsp;
-        }
-        else {
-          nextsp = fgrid_ind[fragid];
-          // logs::lout << logs::info << "get id : " << fragid << " fragment grid from vector at " << nextsp << endl;
-          reduces += fragvecs[lig_ind].getvec(j).size;
-        }
-        last_used[fgrid_ind[fragid]] = frag_itr;
-      }
-      else {
-        assert(0);
-      }
-
-      assert(fragment_grids[nextsp].frag_idx == fragid);
-      const FragmentEnergyGrid& fg = fragment_grids[nextsp];
+      if (!frag_grid_container.isRegistered(fragid))
+        frag_grid_container.insert(FragmentEnergyGrid(frag_library[fragid], makeRotations60(), atom_grids, distance_grid));
+      else
+        reduces += frag_library[fragid].size();
+      const FragmentEnergyGrid& fg = frag_grid_container.get(fragid);
+      frag_grid_container.next();
 
       #pragma omp parallel for // Calculation among rotation is independent
       for (int rotid = 0; rotid < rotsz; ++rotid) {
@@ -477,6 +442,7 @@ int main(int argc, char **argv){
         for (int z = 0, gz = gs.z; z < search_num.z; ++z, gz += ratio.z)
           scores[rotid].addEnergy(x, y, z, fg.getGrid().getEnergy(gx + d[rotid][j].x, gy + d[rotid][j].y, gz + d[rotid][j].z));
       }
+
     }
     // logs::lout << logs::info << "end calc grid score" << endl;
     auto t2 = std::chrono::system_clock::now();
