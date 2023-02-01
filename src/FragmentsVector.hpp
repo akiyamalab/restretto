@@ -36,9 +36,9 @@ namespace fragdock {
     void append(const fragvec& v) { vecs.push_back(v); }
     const std::vector<fragvec>& getvecs() const { return vecs; }
     const fragvec& getvec(int i) const { return vecs[i]; }
-    void rotate(const std::vector<Vector3d>& rotations, int rotid) {
+    void rotate(const Vector3d& rotation) {
       for (auto& fv : vecs) {
-        fv.pos.rotate(rotations[rotid]);
+        fv.pos.rotate(rotation);
         // fv.rotid = RotMatrix[fv.rotid][rotid];
       }
     }

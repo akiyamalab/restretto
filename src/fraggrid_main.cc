@@ -155,6 +155,18 @@ namespace {
   fragdock::Point3d<int> round(const fragdock::Vector3d& v) {
     return fragdock::Point3d<int>(std::round(v.x), std::round(v.y), std::round(v.z));
   }
+
+  std::vector<fragdock::Molecule> convert_molecules(std::vector<OpenBabel::OBMol>& obmols) {
+    std::vector<fragdock::Molecule> ligands_mol(obmols.size()); /* a vector of ligand objects */
+    for (uint l_ind = 0; l_ind < obmols.size(); ++l_ind) {
+      OpenBabel::OBMol& ob_ligand = obmols[l_ind];
+      ob_ligand.AddHydrogens();
+      ligands_mol[l_ind] = format::toFragmentMol(ob_ligand);
+      ob_ligand.DeleteHydrogens();
+      ligands_mol[l_ind].translate(-ligands_mol[l_ind].getCenter());
+    }
+    return ligands_mol;
+  }
 } // namespace
 
 namespace fragdock {
@@ -235,7 +247,7 @@ int main(int argc, char **argv){
   vector<FragmentsVector> fragvecs(ligs_sz); /* a vector of fragment vectors which correspond to ligands */
   vector<Fragment> frag_library; /* list of unique fragments which poses are normalized*/
   vector<int> frag_importance; /* # fragment heavy atoms * fragment occurrence */
-  unordered_map<string, uint> lig_map; /* smiles -> an index of a unique ligand list */
+  
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;
   EnergyCalculator ene_calculator(1.0); 
@@ -243,19 +255,16 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "[TIME STAMP] START MOLECULE OBJECT CONVERSION" << endl;
-  vector<Molecule> ligands_mol(ligs_sz); /* a vector of ligand objects */
-  for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
-    OpenBabel::OBMol& ob_ligand = ligands[l_ind];
-    ob_ligand.AddHydrogens();
-    ligands_mol[l_ind] = format::toFragmentMol(ob_ligand);
-    ob_ligand.DeleteHydrogens();
+  vector<Molecule> ligands_mol = convert_molecules(ligands);
 
+  /* smiles -> an index of a unique ligand list */
+  unordered_map<string, uint> lig_map;
+  for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
     Molecule& mol_ligand = ligands_mol[l_ind];
     const string& ident = mol_ligand.getIdentifier();
     if (!lig_map.count(ident)) {
       lig_map[ident] = lig_map.size();
     }
-    mol_ligand.translate(-mol_ligand.getCenter());
   }
   logs::lout << logs::info << "[TIME STAMP] END   MOLECULE OBJECT CONVERSION" << endl;
 
@@ -403,28 +412,27 @@ int main(int argc, char **argv){
     const string& identifier = mol.getIdentifier();
     // logs::lout << logs::info << (lig_ind + 1) << "th ligand : " << title << endl;
 
-    int rotsz = rotations_ligand.size();
-    int sz = fragvecs[lig_ind].size();
+    int frag_sz = fragvecs[lig_ind].size();
 
     /* relative fragment positions (from center of a ligand) on the scoring grid for each rotation */
-    vector<vector<Point3d<int> > > d(rotsz, vector<Point3d<int> >(sz));
+    vector<vector<Point3d<int> > > frag_rel_pos(rotations_ligand.size(), vector<Point3d<int> >(frag_sz));
 
-    vector<EnergyGrid> scores(rotsz, EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
-    // vector<EnergyGrid> scores(rotsz, EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, 0.0));
+    vector<EnergyGrid> scores(rotations_ligand.size(), EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
+    // vector<EnergyGrid> scores(rotations_ligand.size(), EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, 0.0));
 
-    for (int rotid = 0; rotid < rotsz; ++rotid) {
+    for (int rotid = 0; rotid < rotations_ligand.size(); ++rotid) {
       FragmentsVector fv = fragvecs[lig_ind];
-      fv.rotate(rotations_ligand, rotid);
+      fv.rotate(rotations_ligand[rotid]);
 
-      for (int j = 0; j < sz; ++j) {
-        d[rotid][j] = round(fv.getvec(j).pos / config.grid.score_pitch);
+      for (int j = 0; j < frag_sz; ++j) {
+        frag_rel_pos[rotid][j] = round(fv.getvec(j).pos / config.grid.score_pitch);
       }
     }
 
     auto t1 = std::chrono::system_clock::now();
 
 
-    for (int j = 0; j < sz; ++j) {
+    for (int j = 0; j < frag_sz; ++j) {
       int fragid = fragvecs[lig_ind].getvec(j).frag_idx;
       if (!frag_grid_container.isRegistered(fragid))
         frag_grid_container.insert(FragmentEnergyGrid(frag_library[fragid], makeRotations60(), atom_grids, distance_grid));
@@ -434,13 +442,14 @@ int main(int argc, char **argv){
       frag_grid_container.next();
 
       #pragma omp parallel for // Calculation among rotation is independent
-      for (int rotid = 0; rotid < rotsz; ++rotid) {
+      for (int rotid = 0; rotid < rotations_ligand.size(); ++rotid) {
         // int rid = RotMatrix[fragvecs[lig_ind].getvec(j).rotid][rotid];
         Point3d<int> gs = to_score_num(0, score_num, search_num, ratio);
         for (int x = 0, gx = gs.x; x < search_num.x; ++x, gx += ratio.x)
         for (int y = 0, gy = gs.y; y < search_num.y; ++y, gy += ratio.y)
         for (int z = 0, gz = gs.z; z < search_num.z; ++z, gz += ratio.z)
-          scores[rotid].addEnergy(x, y, z, fg.getGrid().getEnergy(gx + d[rotid][j].x, gy + d[rotid][j].y, gz + d[rotid][j].z));
+          scores[rotid].addEnergy(x, y, z, fg.getGrid().getEnergy(gx + frag_rel_pos[rotid][j].x, gy + frag_rel_pos[rotid][j].y, gz + frag_rel_pos[rotid][j].z));
+          // TODO: can be expressed as lig_grid += fg.getGrid() ??
       }
 
     }
@@ -451,7 +460,7 @@ int main(int argc, char **argv){
 
     // priority_queue<pos_param, vector<pos_param>, greater<pos_param> > q;
     int ind = lig_map[identifier];
-    for (int rotid = 0; rotid < rotsz; ++rotid) {
+    for (int rotid = 0; rotid < rotations_ligand.size(); ++rotid) {
       for (int x = 0; x < search_num.x; ++x) {
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
