@@ -6,6 +6,7 @@
 #include <boost/lexical_cast.hpp>
 #include "infile_reader.hpp"
 
+
 namespace format {
   DockingConfiguration ParseInFile(const char *filename){
     std::ifstream ifs(filename);
@@ -24,9 +25,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.outer_width_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.outer_width_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.outer_width_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.outer_width = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "INNERBOX ")) {
         std::string str = buffer.substr(9);
@@ -35,9 +37,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.inner_width_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.inner_width_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.inner_width_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.inner_width = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "BOX_CENTER ")) {
         std::string str = buffer.substr(11);
@@ -46,9 +49,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.cx = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.cy = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.cz = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.center = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "SEARCH_PITCH ")) {
         std::string str = buffer.substr(13);
@@ -57,9 +61,10 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.search_pitch_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.search_pitch_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.search_pitch_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.search_pitch = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "SCORING_PITCH ")) {
         std::string str = buffer.substr(14);
@@ -68,22 +73,23 @@ namespace format {
         boost::algorithm::trim(vals[0]);
         boost::algorithm::trim(vals[1]);
         boost::algorithm::trim(vals[2]);
-        conf.grid.score_pitch_x = boost::lexical_cast<fltype>(vals[0]);
-        conf.grid.score_pitch_y = boost::lexical_cast<fltype>(vals[1]);
-        conf.grid.score_pitch_z = boost::lexical_cast<fltype>(vals[2]);
+        conf.grid.score_pitch = fragdock::Point3d<fltype>(
+          boost::lexical_cast<fltype>(vals[0]),
+          boost::lexical_cast<fltype>(vals[1]),
+          boost::lexical_cast<fltype>(vals[2]));
       }
       else if (boost::algorithm::starts_with(buffer, "REUSE_FRAG_GRID ")) {
         std::string str = buffer.substr(16);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         if (str == "false" || str == "none" || str == "noreuse") {
-          conf.reuse_grid = DockingConfiguration::REUSE_NONE;
+          conf.reuse_grid = DockingConfiguration::ReuseStrategy::NONE;
         }
         else if (str == "online") {
-          conf.reuse_grid = DockingConfiguration::REUSE_ONLINE;
+          conf.reuse_grid = DockingConfiguration::ReuseStrategy::ONLINE;
         }
         else {
-          conf.reuse_grid = DockingConfiguration::REUSE_OFFLINE;
+          conf.reuse_grid = DockingConfiguration::ReuseStrategy::OFFLINE;
         }
       }
       else if (boost::algorithm::starts_with(buffer, "REORDER_LIGANDS ")) {
@@ -123,6 +129,19 @@ namespace format {
         conf.rotangs_file = buffer.substr(8);
       }
     }
+
     return conf;
+  }
+  void DockingConfiguration::checkConfigValidity() const {
+    // ratio of search_pitch and score_pitch must be integer
+    const fragdock::Point3d<int> ratio = utils::round(grid.search_pitch / grid.score_pitch);
+    assert(abs(grid.score_pitch.x * ratio.x - grid.search_pitch.x) < EPS);
+    assert(abs(grid.score_pitch.y * ratio.y - grid.search_pitch.y) < EPS);
+    assert(abs(grid.score_pitch.z * ratio.z - grid.search_pitch.z) < EPS);
+
+    // memory size must be enough to store at least ONE grid
+    const fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / grid.score_pitch) * 2 + 1; // # of grid points per axis
+    int FGRID_SIZE = (int)((mem_size * 1024 * 1024) / ((int64_t) num.x * num.y * num.z * sizeof(fltype))); // # of grids that can be stored in memory
+    assert(FGRID_SIZE > 0);
   }
 } // namespace format

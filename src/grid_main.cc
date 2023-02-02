@@ -71,12 +71,10 @@ namespace {
     const fragdock::Vector3d temp(0,0,0);
     fragdock::Atom atom(0, temp, energy_grid.getXSType());
 
-    // #pragma omp parallel for
+    // #pragma omp parallel for // TODO: the result is changed when parallelized
     for(int x=0; x<energy_grid.getNum().x; x++) {
       for(int y=0; y<energy_grid.getNum().y; y++) {
         for(int z=0; z<energy_grid.getNum().z; z++) {
-          // fragdock::Atom a = atom;
-          // fragdock::Molecule mol(std::vector<fragdock::Atom>(1, atom));
           atom.setPos(energy_grid.convert(x, y, z));
           energy_grid.setEnergy(x, y, z, calc.getEnergy(atom, receptor_mol));
         }
@@ -89,48 +87,43 @@ namespace {
 
 
 int main(int argc, char **argv){
-  format::DockingConfiguration conf = parseArgs(argc, argv);
+  const format::DockingConfiguration conf = parseArgs(argc, argv);
   makeFolder(conf.grid_folder);
 
   //Prepareing logger
-  logs::lout.open("atomgrid-gen.log");
+  logs::log_init("atomgrid-gen.log");
 
   // logs::lout << logs::info << "Read parameter file. " << conf.forcefield_file;
   // fragdock::AtomType::setAtomParams(conf.forcefield_file.c_str());
 
   logs::lout << logs::info << "Prepare receptor molecule.";
-  OpenBabel::OBMol receptor = format::ParseFileToOBMol(conf.receptor_file.c_str())[0];
-  fragdock::Molecule receptor_mol = format::toFragmentMol(receptor);
+  const OpenBabel::OBMol receptor = format::ParseFileToOBMol(conf.receptor_file.c_str())[0];
+  const fragdock::Molecule receptor_mol = format::toFragmentMol(receptor);
 
-  format::SearchGrid& grid = conf.grid;
+  const format::SearchGrid& grid = conf.grid;
 
-  fragdock::EnergyCalculator calc(0.95, 0.0);
+  const fragdock::EnergyCalculator calc(0.95);
 
   //Making energyGrid
+  #pragma omp parallel for // making energy grids can be parallelized
   for(int xs_type = 0; xs_type < XS_TYPE_SIZE; xs_type++){
-    logs::lout << logs::info << "Prepare energy grid. " << xs_strings[xs_type];
+    logs::lout << logs::info << "Prepare energy grid. " << xs_strings[xs_type] << std::endl;
 
     //prepare energy_grid
     // const fltype MARGIN = 10;
     // const fltype DEFAULT_PITCH = 0.25; // (atomtypes[i]=="e") ? 0.5 : 0.25;
-    fltype width_x = grid.outer_width_x;
-    fltype width_y = grid.outer_width_y;
-    fltype width_z = grid.outer_width_z;
-    fragdock::Point3d<fltype> center(grid.cx, grid.cy, grid.cz);
-    fragdock::Point3d<fltype> pitch(grid.score_pitch_x, grid.score_pitch_y, grid.score_pitch_z);
-    fragdock::Point3d<int> num(static_cast<int>(ceil(width_x / 2 / pitch.x) + 1e-9) * 2 + 1,
-                               static_cast<int>(ceil(width_y / 2 / pitch.y) + 1e-9) * 2 + 1,
-                               static_cast<int>(ceil(width_z / 2 / pitch.z) + 1e-9) * 2 + 1);
+    const fragdock::Point3d<fltype>& center = grid.center;
+    const fragdock::Point3d<fltype>& pitch = grid.score_pitch;
+    const fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / pitch) * 2 + 1;
 
-    logs::lout << logs::info << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type];
+    logs::lout << logs::debug << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type] << std::endl;
     fragdock::AtomEnergyGrid energy_grid(center, pitch, num, xs_type);
-    logs::lout << logs::info << "Start calculation of each point. " << xs_strings[xs_type];
+    logs::lout << logs::debug << "Start calculation of each point. " << xs_strings[xs_type] << std::endl;
     makeEnergyGrid(energy_grid, receptor_mol, calc);
 
-    logs::lout << logs::info << "Make energy grid file. " << xs_strings[xs_type];
-    std::string filename = conf.grid_folder + "/" + xs_strings[xs_type] + ".grid";
-    energy_grid.writeFile(filename);
-    logs::lout << logs::info << "Making grid file has done. " << xs_strings[xs_type];
+    logs::lout << logs::debug << "Make energy grid file. " << xs_strings[xs_type] << std::endl;
+    energy_grid.writeFile(conf.grid_folder + "/" + xs_strings[xs_type] + ".grid");
+    logs::lout << logs::info << "Making grid file has done. " << xs_strings[xs_type] << std::endl;
   }
 
   return 0;

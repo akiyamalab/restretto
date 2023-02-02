@@ -192,7 +192,7 @@ namespace fragdock {
 
   std::vector<std::vector<Fragment> > DecomposeMolecule(const std::vector<Molecule> &mols){
     std::vector<std::vector<Fragment> > ret(mols.size());
-    #pragma omp parallel for
+    #pragma omp parallel for // decomposition is independent process for each molecule
     for(int i=0; i<mols.size(); i++){
       ret[i] = DecomposeMolecule(mols[i]);
     }

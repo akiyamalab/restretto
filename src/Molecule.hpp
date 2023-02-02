@@ -24,7 +24,9 @@ namespace fragdock {
     // std::vector<std::vector<int> > bond_ids;
     // fltype radius;
     int heavy_num;
-    std::string title, smiles, identifier;
+    std::string title;
+    std::string smiles;
+    std::string identifier; /* title+","+smiles */
     fltype intraEnergy;
   public:
     std::vector<std::vector<int> > bond_ids;
@@ -49,10 +51,12 @@ namespace fragdock {
     friend std::ostream& operator<< (std::ostream& os, const Molecule& mol);
 
     void renumbering(int newsz, const std::vector<unsigned int>& vec);
+    bool isRenumbered() const;
     void deleteHydrogens();
 
     const std::string& gettitle() const { return title; }
     const std::string& getsmiles() const { return smiles; }
+    /* identifier = title + "," + smiles */
     const std::string& getIdentifier() const { return identifier; }
 
 #ifdef FRAGMENTTEST

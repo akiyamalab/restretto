@@ -26,6 +26,15 @@ namespace utils {
     return ((fltype)rand() / INT_MAX) * (upper - lower) + lower;
   }
 
+  /**
+   * @param[in] val a real value
+   * @return integer a ceiled value
+   */
+  int ceili(fltype val){
+    // ceil sometimes returns a value which is slightly smaller than the actual value
+    return static_cast<int>(ceil(val)+EPS); 
+  }
+
   std::string GetExtension(const std::string &path){
     std::string ext;
     std::size_t pos1 = path.rfind('.');

@@ -152,18 +152,14 @@ int main(int argc, char **argv){
 
   const Point3d<int>& score_num = atom_grids[0].getNum();
 
-  Point3d<int> ratio(utils::round(config.grid.search_pitch_x / config.grid.score_pitch_x),
-                     utils::round(config.grid.search_pitch_y / config.grid.score_pitch_y),
-                     utils::round(config.grid.search_pitch_z / config.grid.score_pitch_z));
+  const Point3d<int> ratio = utils::round(config.grid.search_pitch / config.grid.score_pitch);
 
-  assert(abs(config.grid.score_pitch_x * ratio.x - config.grid.search_pitch_x) < 1e-4);
-  assert(abs(config.grid.score_pitch_y * ratio.y - config.grid.search_pitch_y) < 1e-4);
-  assert(abs(config.grid.score_pitch_z * ratio.z - config.grid.search_pitch_z) < 1e-4);
+  assert(abs(config.grid.score_pitch.x * ratio.x - config.grid.search_pitch.x) < EPS);
+  assert(abs(config.grid.score_pitch.y * ratio.y - config.grid.search_pitch.y) < EPS);
+  assert(abs(config.grid.score_pitch.z * ratio.z - config.grid.search_pitch.z) < EPS);
 
-  Point3d<fltype> search_pitch(config.grid.search_pitch_x, config.grid.search_pitch_y, config.grid.search_pitch_z);
-  Point3d<int> search_num(static_cast<int>(ceil(config.grid.inner_width_x / 2 / search_pitch.x) + 1e-9) * 2 + 1,
-                          static_cast<int>(ceil(config.grid.inner_width_y / 2 / search_pitch.y) + 1e-9) * 2 + 1,
-                          static_cast<int>(ceil(config.grid.inner_width_z / 2 / search_pitch.z) + 1e-9) * 2 + 1);
+  const Point3d<fltype>& search_pitch = config.grid.search_pitch;
+  const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1;
 
 
   EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
@@ -171,12 +167,11 @@ int main(int argc, char **argv){
   vector<Molecule> ligands_mol(ligs_sz);
 
   int lig_kind_sz = 0;
-  vector<vector<int> > same_ligs;
   unordered_map<string, int> lig_map;
 
-  fltype margin = min({ config.grid.outer_width_x - config.grid.inner_width_x,
-                        config.grid.outer_width_y - config.grid.inner_width_y,
-                        config.grid.outer_width_z - config.grid.inner_width_z }) * 0.5;
+  fltype margin = min({ config.grid.outer_width.x - config.grid.inner_width.x,
+                        config.grid.outer_width.y - config.grid.inner_width.y,
+                        config.grid.outer_width.z - config.grid.inner_width.z }) * 0.5;
 
 
   logs::lout << logs::info << "start pre-calculate energy" << endl;
@@ -196,7 +191,7 @@ int main(int argc, char **argv){
     Molecule& mol = ligands_mol[lig_ind];
 
     mol.deleteHydrogens();
-    mol.setIntraEnergy(calc.getIntraEnergy(mol));
+    mol.setIntraEnergy(calc.calcIntraEnergy(mol));
 
     // mol.deleteHydrogens();
     // mol.calcRadius();
@@ -209,9 +204,7 @@ int main(int argc, char **argv){
     if (!lig_map.count(identifier)) {
       lig_map[identifier] = lig_kind_sz;
       ++lig_kind_sz;
-      same_ligs.push_back(vector<int>());
     }
-    same_ligs[lig_map[identifier]].push_back(lig_ind);
   }
 
   vector<int> sorted_lig(ligs_sz);

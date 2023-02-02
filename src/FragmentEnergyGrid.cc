@@ -4,14 +4,13 @@ namespace fragdock {
   FragmentEnergyGrid::FragmentEnergyGrid(const Fragment& orig_frag,
                                          const std::vector<Vector3d>& rot_angles,
                                          const std::vector<AtomEnergyGrid>& atom_grids,
-                                         const EnergyGrid& distance_grid) : frag_id(orig_frag.getId()),
-                                                                            temp_id(orig_frag.gettempind()) {
+                                         const EnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
     using namespace std;
     if(atom_grids.empty()) {
       cerr << "atom_grids is empty" << endl;
       return;
     }
-    assert(orig_frag.getCenter().abs() < 1e-4);
+    assert(orig_frag.getCenter().abs() < EPS);
     const Point3d<int>& num = atom_grids[0].getNum();
     grid = EnergyGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), num, LIMIT_ENERGY);
     int rotsz = rot_angles.size();

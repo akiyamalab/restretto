@@ -89,7 +89,7 @@ int main(int argc, char **argv){
       fltype gauss2      = EnergyCalculator::gauss2(mol, receptor_mol);
       fltype repulsion   = EnergyCalculator::repulsion(mol, receptor_mol);
       fltype hydrophobic = EnergyCalculator::hydrophobic(mol, receptor_mol);
-      fltype hydrogen    = EnergyCalculator::Hydrogen(mol, receptor_mol);
+      fltype hydrogen    = EnergyCalculator::hydrogenBond(mol, receptor_mol);
 
       fltype score = (-0.035579) * gauss1
                    + (-0.005156) * gauss2

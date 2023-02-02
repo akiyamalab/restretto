@@ -11,49 +11,7 @@ namespace fragdock {
   }
 
   fltype EnergyGrid::getEnergy(const Vector3d &pos) const {
-    fltype energy = 0.0;
-
-#ifdef TRILINEAR
-    Point3d<fltype> real((pos.x-center.x)/pitch.x + (num.x-1)/2,
-			 (pos.y-center.y)/pitch.y + (num.y-1)/2,
-			 (pos.z-center.z)/pitch.z + (num.z-1)/2);
-
-    //trilinear interpolation
-    int x = floor(real.x);
-    if(x < 0) x = 0;
-    else if(x >= num.x-1) x = num.x-2;
-    fltype frac_x = real.x - x;
-    frac_x = (frac_x<0 ? 0 : (frac_x>1?1:frac_x) );
-    fltype revf_x = 1 - frac_x;
-
-    int y = floor(real.y);
-    if(y < 0) y = 0;
-    else if(y >= num.y-1)   y = num.y-2;
-    fltype frac_y = real.y - y;
-    frac_y = (frac_y<0 ? 0 : (frac_y>1?1:frac_y) );
-    fltype revf_y = 1 - frac_y;
-
-    int z = floor(real.z);
-    if(z < 0) z = 0;
-    else if(z >= num.z-1)   z = num.z-2;
-    fltype frac_z = real.z - z;
-    frac_z = (frac_z<0 ? 0 : (frac_z>1?1:frac_z) );
-    fltype revf_z = 1 - frac_z;
-
-
-    energy += getEnergy(x + 1, y + 1, z + 1) * frac_x * frac_y * frac_z;
-    energy += getEnergy(x + 1, y + 1, z    ) * frac_x * frac_y * revf_z;
-    energy += getEnergy(x + 1, y    , z + 1) * frac_x * revf_y * frac_z;
-    energy += getEnergy(x + 1, y    , z    ) * frac_x * revf_y * revf_z;
-    energy += getEnergy(x    , y + 1, z + 1) * revf_x * frac_y * frac_z;
-    energy += getEnergy(x    , y + 1, z    ) * revf_x * frac_y * revf_z;
-    energy += getEnergy(x    , y    , z + 1) * revf_x * revf_y * frac_z;
-    energy += getEnergy(x    , y    , z    ) * revf_x * revf_y * revf_z;
-#endif
-#ifndef TRILINEAR
-    energy = getEnergy(convertX(pos), convertY(pos), convertZ(pos));
-#endif
-    return energy;
+    return getEnergy(convertX(pos), convertY(pos), convertZ(pos)); // nearest grid point
   }
   void EnergyGrid::parse(std::ifstream& ifs) {
     ifs.read(reinterpret_cast<char*>(&center), sizeof(center));

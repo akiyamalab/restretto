@@ -170,21 +170,20 @@ namespace OpenBabel{
     pmol->RenumberAtoms(newatoms);
   }
 
-  void getRenumber(OpenBabel::OBMol& mol, std::vector<unsigned int>& canon_labels) {
+  /**
+   * Determine the canonical order indices of atoms in the molecule.
+   * @param[in] mol the molecule
+   * @return The canonical order indices of atoms in the molecule
+  */
+  std::vector<uint> getRenumber(OpenBabel::OBMol& mol) {
+    std::vector<uint> canon_labels;
     OpenBabel::OBMol * pmol = &mol;
     std::vector<unsigned int> symmetry_classes;
     OpenBabel::OBGraphSym gs(pmol);
     gs.GetSymmetry(symmetry_classes);
 
     OpenBabel::CanonicalLabels(pmol, symmetry_classes, canon_labels);
-
-    // std::vector<int> renum(mol.NumAtoms(), 0);
-    // for (int i = 0; i < (int)canon_labels.size(); ++i) {
-    //   // renum[canon_labels[i] - 1] = i + 1;
-    //   renum[i] = canon_labels[i];
-    // }
-
-    // mol.RenumberAtoms(renum);
+    return canon_labels;
   }
 
   void UpdateCoords(OpenBabel::OBMol& mol, const fragdock::Molecule& ref_mol){

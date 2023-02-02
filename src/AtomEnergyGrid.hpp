@@ -6,6 +6,9 @@
 #ifndef ATOM_ENERGY_GRID_H_
 #define ATOM_ENERGY_GRID_H_
 namespace fragdock {
+  /**
+   * An energy grid for a single atom type.
+  */
   class AtomEnergyGrid : public EnergyGrid {
     int xs_type;
   public:

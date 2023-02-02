@@ -39,7 +39,7 @@ namespace OpenBabel{
   };
   std::string canonicalSmiles(const OpenBabel::OBMol& mol);
   void toCanonical(OpenBabel::OBMol& mol);
-  void getRenumber(OpenBabel::OBMol& mol, std::vector<unsigned int>& canon_labels);
+  std::vector<uint> getRenumber(OpenBabel::OBMol& mol);
   void UpdateCoords(OpenBabel::OBMol& mol, const fragdock::Molecule& ref_mol);
   void outputOBMolsToSDF(const std::string& filepath, const std::vector<OpenBabel::OBMol>& mols);
   void outputOBMolsToSDF(const std::string& filepath, const std::vector<std::vector<OpenBabel::OBMol> >& molss);
