@@ -13,9 +13,9 @@
 namespace fragdock {
   struct Bond {
     int atom_id1, atom_id2;
-    bool is_rotor;
+    bool is_rotatable;
     friend std::ostream& operator<< (std::ostream& os, const Bond& bond);
-    Bond(const int atom_id1, const int atom_id2, const bool is_rotor) : atom_id1(atom_id1), atom_id2(atom_id2), is_rotor(is_rotor) {}
+    Bond(const int atom_id1, const int atom_id2, const bool is_rotatable) : atom_id1(atom_id1), atom_id2(atom_id2), is_rotatable(is_rotatable) {}
   };
   class Molecule {
   protected:
@@ -50,7 +50,8 @@ namespace fragdock {
     const std::vector<Bond>& getBonds() const { return bonds; }
     friend std::ostream& operator<< (std::ostream& os, const Molecule& mol);
 
-    void renumbering(int newsz, const std::vector<unsigned int>& vec);
+    // sort atom indices uniquely based on the atom order of canonical smiles
+    void renumberAtoms(int newsz, const std::vector<unsigned int>& vec);
     bool isRenumbered() const;
     void deleteHydrogens();
 

@@ -147,7 +147,7 @@ namespace fragdock {
     }
     return os;
   }
-  void Molecule::renumbering(int newsz, const std::vector<unsigned int>& vec) {
+  void Molecule::renumberAtoms(int newsz, const std::vector<unsigned int>& vec) {
     using namespace std;
     int n = vec.size();
     assert(size() == n);
@@ -172,7 +172,7 @@ namespace fragdock {
       assert(vec[dict[a]] > 0 && vec[dict[b]] > 0);
       newbond_ids[vec[dict[a]] - 1].push_back(newbonds.size());
       newbond_ids[vec[dict[b]] - 1].push_back(newbonds.size());
-      newbonds.push_back(Bond(vec[dict[a]] - 1, vec[dict[b]] - 1, bonds[i].is_rotor));
+      newbonds.push_back(Bond(vec[dict[a]] - 1, vec[dict[b]] - 1, bonds[i].is_rotatable));
     }
     for (int i = 0; i < newsz; ++i) {
       newatoms[i].setId(i);
@@ -197,7 +197,7 @@ namespace fragdock {
         vec[i] = cnt;
       }
     }
-    renumbering(cnt, vec);
+    renumberAtoms(cnt, vec);
   }
   fltype Molecule::getNrots() const {
 
@@ -230,7 +230,7 @@ namespace fragdock {
       for (auto& id : bond_ids[i]) {
         const Bond& b = bonds[id];
         const Atom& o = atoms[b.atom_id1 + b.atom_id2 - i];
-        if (b.is_rotor && xs_is_heavy(o.getXSType()) && adj_heavy_num[o.getId()] > 1) {
+        if (b.is_rotatable && xs_is_heavy(o.getXSType()) && adj_heavy_num[o.getId()] > 1) {
           ++cnt;
         }
       }

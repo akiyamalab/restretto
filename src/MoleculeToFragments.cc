@@ -59,7 +59,7 @@ namespace fragdock {
       const Bond &bond = bonds[i];
       int a = bond.atom_id1;
       int b = bond.atom_id2;
-      if (!bond.is_rotor) uf.unite(a, b);
+      if (!bond.is_rotatable) uf.unite(a, b);
     }
     // unite members of ring systems
     vector<vector<int> > rings = ringDetector(atoms.size(), bonds);
@@ -117,7 +117,7 @@ namespace fragdock {
       const Bond &bond = bonds[i];
       int a = bond.atom_id1;
       int b = bond.atom_id2;
-      if (bond.is_rotor and
+      if (bond.is_rotatable and
           atoms[a].getXSType() != XS_TYPE_H and
           atoms[b].getXSType() != XS_TYPE_H and
           set_id[a] == set_id[b]) {
@@ -150,12 +150,12 @@ namespace fragdock {
 
         dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_DUMMY));
         dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_DUMMY));
-        bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotor));
-        bonds_in_frags[set_id[b]].push_back(Bond(a, b, bond.is_rotor));
+        bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotatable));
+        bonds_in_frags[set_id[b]].push_back(Bond(a, b, bond.is_rotatable));
       }
       else {
         // bonds_in_frags[set_id[a]].push_back(bond);
-        bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotor));
+        bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotatable));
       }
     }
     // create fragments

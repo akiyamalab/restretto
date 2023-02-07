@@ -301,11 +301,11 @@ int main(int argc, char **argv){
     vector<Fragment>& fragments  = fragments_of_ligands[l_ind];
 
     for (Fragment& mol_frag : fragments) {
-      { // renumbering and setting smiles to mol_frag
+      { // renumberAtoms and setting smiles to mol_frag
         OpenBabel::OBMol ob_frag = format::toOBMol(mol_frag, ob_ligand);
         mol_frag.setSmiles(OpenBabel::canonicalSmiles(ob_frag));
         const vector<uint> canon_labels = OpenBabel::getRenumber(ob_frag); /* atom indices ordered canonically */
-        mol_frag.renumbering(mol_frag.size(), canon_labels);
+        mol_frag.renumberAtoms(mol_frag.size(), canon_labels);
       } // destuct object ob_frag
 
       if (fragmap.count(mol_frag.getSmiles())) {

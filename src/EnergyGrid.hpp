@@ -18,6 +18,7 @@ namespace fragdock {
     /* initialize the energy grid with a real value ini */
     void initEnergy(fltype ini) { this->grid = std::vector<fltype>(num.x*num.y*num.z, ini); }
     void initEnergy() { initEnergy(INF_ENERGY); }
+    int vectorIndex(int x_ind, int y_ind, int z_ind) const { return (x_ind*num.y+y_ind)*num.z+z_ind; }
 
   protected:
     int max(int x, int y) const { return x>y?x:y; }
@@ -36,10 +37,10 @@ namespace fragdock {
     ~EnergyGrid() {}
 
     /* set an energy for grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates */
-    void setEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[(x_ind*num.y+y_ind)*num.z+z_ind] = val; }
+    void setEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[vectorIndex(x_ind, y_ind, z_ind)] = val; }
 
     /* add an energy for grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates */
-    void addEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[(x_ind*num.y+y_ind)*num.z+z_ind] += val; }
+    void addEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[vectorIndex(x_ind, y_ind, z_ind)] += val; }
 
 
     /* get an energy of grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates*/

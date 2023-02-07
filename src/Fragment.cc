@@ -24,22 +24,22 @@ namespace fragdock {
     tri[0] = 0;
     tri[1] = 1;
     if (! isRenumbered()) {
-      throw std::runtime_error("Fragment::settri() : Renumbering is required.");
+      throw std::runtime_error("Fragment::settri() : renumberAtoms is required.");
     }
     for (int i = 0; i < size(); ++i) {
       assert(atoms[i].getId() == i); /* assumption: already renumbered */
     }
 
     // fltype minrad = 1e6;
-    for (int i = 0; i < size(); ++i) {
-      const Atom& a0 = atoms[i];
-      int sz = bond_ids[i].size();
+    for (int atom_id = 0; atom_id < size(); ++atom_id) {
+      const Atom& a0 = atoms[atom_id];
+      int sz = bond_ids[atom_id].size();
       for (int j = 0; j < sz; ++j) {
         for (int k = j + 1; k < sz; ++k) {
-          Bond& b1 = bonds[bond_ids[i][j]];
-          Bond& b2 = bonds[bond_ids[i][k]];
-          int ai1 = b1.atom_id1 + b1.atom_id2 - i;
-          int ai2 = b2.atom_id1 + b2.atom_id2 - i;
+          Bond& b1 = bonds[bond_ids[atom_id][j]];
+          Bond& b2 = bonds[bond_ids[atom_id][k]];
+          int ai1 = b1.atom_id1 + b1.atom_id2 - atom_id;
+          int ai2 = b2.atom_id1 + b2.atom_id2 - atom_id;
           const Atom& a1 = atoms[ai1];
           const Atom& a2 = atoms[ai2];
 
@@ -48,7 +48,7 @@ namespace fragdock {
           fltype p = vec1.getAngle(vec2);
           const fltype pi = acos(-1.0);
           if (p > pi * 0.1 && p < pi * 0.9) {
-            tri[0] = i;
+            tri[0] = atom_id;
             tri[1] = ai1;
             tri[2] = ai2;
             return;
