@@ -128,6 +128,11 @@ namespace format {
       else if (boost::algorithm::starts_with(buffer, "ROTANGS ")) {
         conf.rotangs_file = buffer.substr(8);
       }
+      else if (boost::algorithm::starts_with(buffer, "OUTPUT_POSES ")) {
+        std::string str = buffer.substr(12);
+        boost::algorithm::trim(str);
+        conf.output_poses = boost::lexical_cast<int64_t>(str);
+      }
     }
 
     return conf;

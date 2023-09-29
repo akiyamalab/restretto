@@ -21,7 +21,7 @@ namespace format {
     std::string rotangs_file;
     ReuseStrategy reuse_grid = ReuseStrategy::OFFLINE;
     bool reorder = true;
-    int64_t mem_size;
+    int64_t mem_size, output_poses;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case ReuseStrategy::OFFLINE: return "REUSE_OFFLINE";
