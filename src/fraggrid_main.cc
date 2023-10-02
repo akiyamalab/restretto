@@ -43,7 +43,8 @@ namespace {
       ("receptor,r", value<std::string>(), "receptor file (.pdb file)")
       ("grid,g", value<std::string>(), "grid folder")
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
-      ("log", value<std::string>(), "log file");
+      ("log", value<std::string>(), "log file")
+      ("pose,p", value<int64_t>(), "# of output poses");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -66,6 +67,7 @@ namespace {
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
+    if (vmap.count("pose")) conf.output_poses = vmap["pose"].as<int64_t>();
     conf.checkConfigValidity();
     return conf;
   }
@@ -88,6 +90,7 @@ namespace {
     logs::lout << "Output file name    : "+config.output_file     << std::endl;
     logs::lout << "Grid folder name    : "+config.grid_folder     << std::endl;
     logs::lout << "Memory size[MB]     : "<<config.mem_size       << std::endl;
+    logs::lout << "# of output poses   : "<<config.output_poses   << std::endl;
   }
 
   struct pos_param {
@@ -534,7 +537,10 @@ int main(int argc, char **argv){
 
     // logs::lout << "mol : " << title << endl;
 
-    for (int j = 0; j < OUTPUT_POSES_PER_LIGAND && j < out_mols.size(); ++j) {
+    // how many poses are output per ligand (default: OUTPUT_POSES_PER_LIGAND)
+    int output_poses = config.output_poses == NULL ? OUTPUT_POSES_PER_LIGAND : config.output_poses;
+
+    for (int j = 0; j < output_poses && j < out_mols.size(); ++j) {
       int lig_ind = out_mols[j].second.first;
       fltype score = (out_mols[j].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
       // fltype score = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
