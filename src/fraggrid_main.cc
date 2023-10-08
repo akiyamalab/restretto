@@ -13,6 +13,7 @@
 #include "Optimizer.hpp"
 #include "MinValuesVector.hpp"
 #include "FragmentEnergyGridContainer.hpp"
+#include "RMSD.hpp"
 
 #include <iostream>
 #include <iomanip>
