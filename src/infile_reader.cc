@@ -128,10 +128,15 @@ namespace format {
       else if (boost::algorithm::starts_with(buffer, "ROTANGS ")) {
         conf.rotangs_file = buffer.substr(8);
       }
-      else if (boost::algorithm::starts_with(buffer, "OUTPUT_POSES ")) {
-        std::string str = buffer.substr(12);
+      else if (boost::algorithm::starts_with(buffer, "OUTPUT_POSES_PER_LIGAND ")) {
+        std::string str = buffer.substr(24);
         boost::algorithm::trim(str);
         conf.output_poses = boost::lexical_cast<int64_t>(str);
+      }
+      else if (boost::algorithm::starts_with(buffer, "POSE_RMSD ")) {
+        std::string str = buffer.substr(10);
+        boost::algorithm::trim(str);
+        conf.pose_rmsd = boost::lexical_cast<fltype>(str);
       }
     }
 

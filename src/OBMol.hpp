@@ -91,7 +91,7 @@ namespace OpenBabel{
   void outputOBMolsToSDF(const std::string& filepath, const std::vector<std::vector<OpenBabel::OBMol> >& molss);
   OpenBabel::OBMol CreateSubMolecule(const OpenBabel::OBMol& reference, const std::vector<int>& atom_ids);
   //preprocess molecule into a standardized state for heavy atom rmsd computation
-  static void processMol(OBMol& mol);
+  void processMol(OpenBabel::OBMol& mol);
 }
 
 #endif

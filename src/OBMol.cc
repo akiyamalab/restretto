@@ -304,19 +304,19 @@ namespace OpenBabel{
     return mol;
   }
 
-  static void processMol(OpenBabel::OBMol& mol) {
+  void processMol(OpenBabel::OBMol& mol) {
     //isomorphismmapper wants isomorphic atoms to have the same aromatic and ring state,
     //but these proporties aren't reliable enough to be trusted in evaluating molecules
     //should be considered the same based solely on connectivity
     
     mol.DeleteHydrogens(); //heavy atom rmsd
-    for(OBAtomIterator aitr = mol.BeginAtoms(); aitr != mol.EndAtoms(); aitr++) {
-      OBAtom *a = *aitr;
+    for(OpenBabel::OBAtomIterator aitr = mol.BeginAtoms(); aitr != mol.EndAtoms(); aitr++) {
+      OpenBabel::OBAtom *a = *aitr;
       a->UnsetAromatic();
       a->SetInRing();
     }
-    for(OBBondIterator bitr = mol.BeginBonds(); bitr != mol.EndBonds(); bitr++) {
-      OBBond *b = *bitr;
+    for(OpenBabel::OBBondIterator bitr = mol.BeginBonds(); bitr != mol.EndBonds(); bitr++) {
+      OpenBabel::OBBond *b = *bitr;
       b->UnsetAromatic();
       b->SetBondOrder(1);
       b->SetInRing();

@@ -68,6 +68,7 @@ namespace {
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
     if (vmap.count("pose")) conf.output_poses = vmap["pose"].as<int64_t>();
+    if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
   }
@@ -90,7 +91,6 @@ namespace {
     logs::lout << "Output file name    : "+config.output_file     << std::endl;
     logs::lout << "Grid folder name    : "+config.grid_folder     << std::endl;
     logs::lout << "Memory size[MB]     : "<<config.mem_size       << std::endl;
-    logs::lout << "# of output poses   : "<<config.output_poses   << std::endl;
   }
 
   struct pos_param {
@@ -507,6 +507,9 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
+  
+  logs::lout << logs::debug << "config.output_poses : " << config.output_poses << endl;
+  logs::lout << logs::debug << "config.pose_rmsd    : " << config.pose_rmsd << endl;
 
   for (const auto& p : lig_map) {
     const string& identifier = p.first;
@@ -535,22 +538,39 @@ int main(int argc, char **argv){
 
     outputcsv << identifier << "," << best_score << endl;
 
-    // logs::lout << "mol : " << title << endl;
 
-    // how many poses are output per ligand (default: OUTPUT_POSES_PER_LIGAND)
-    int output_poses = config.output_poses == NULL ? OUTPUT_POSES_PER_LIGAND : config.output_poses;
+    int cand_num = out_mols.size();
+    vector<fltype> process_score;
+    vector<OpenBabel::OBMol> process_mol;
+    for (int cand = 0; cand < cand_num; ++cand) {
+      int lig_ind = out_mols[cand].second.first;
+      fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
+      // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
+      OpenBabel::OBMol mol = ligands[lig_ind];
+      OpenBabel::UpdateCoords(mol, out_mols[cand].second.second);
 
-    for (int j = 0; j < output_poses && j < out_mols.size(); ++j) {
-      int lig_ind = out_mols[j].second.first;
-      fltype score = (out_mols[j].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
-      // fltype score = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
-      logs::lout << "  " << (j + 1) << "th pose's score : " << score << endl;
-      OpenBabel::OBMol obmol = ligands[lig_ind];
-      OpenBabel::UpdateCoords(obmol, out_mols[j].second.second);
-      outputs.write(obmol);
-
-      // obmol.AddHydrogens();
-      // Molecule mol = format::toFragmentMol(obmol);
+      OpenBabel::processMol(mol);
+      OpenBabel::Matcher matcher(mol);
+      // check RMSD
+      for (int acpt = 0; acpt <= process_mol.size(); ++acpt) {
+        if (acpt == process_mol.size()) { // finish the candidate pose search
+          outputs.write(mol);
+          process_score.push_back(score);
+          process_mol.push_back(mol);
+          logs::lout << "  " << process_score.size() << "th pose's score : " << score << endl;
+          break;
+        }
+        // logs::lout << "(candidate index, accepted index)=(" << cand << ", " << acpt << ")\tRMSD : " << matcher.computeRMSD(process_mol[acpt]) << endl;
+        if (matcher.computeRMSD(process_mol[acpt]) <= config.pose_rmsd) { // too close to accepted poses
+          break;
+        }
+      }
+      if (process_score.size() == config.output_poses) { // reach requested number
+        break;
+      }
+      if (cand == cand_num-1) { // cannot find requested number
+        logs::lout << logs::info << "Couldn't find config.output_poses" << endl;
+      }
     }
   }
   outputs.close();
