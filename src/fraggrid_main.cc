@@ -573,9 +573,6 @@ int main(int argc, char **argv){
       if (output_poses.size() == config.output_poses) { // reach requested number
         break;
       }
-      if (cand == cand_num-1) { // cannot find requested number
-        logs::lout << logs::info << "Couldn't find config.output_poses pose." << endl;
-      }
     }
 
     // write poses
