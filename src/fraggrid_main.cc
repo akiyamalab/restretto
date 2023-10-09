@@ -171,6 +171,17 @@ namespace {
     }
     return ligands_mol;
   }
+
+  // whether the candidate mol has RMSD > pose_rmsd with all accepted mols (RMSD > pose_rmsd: true)
+  bool can_output(OpenBabel::OBMol& cand_mol, std::vector<std::pair<fltype, OpenBabel::OBMol> >& acpt_mols, fltype pose_rmsd) {
+    OpenBabel::Matcher matcher(cand_mol);
+    for (int i = 0; i < acpt_mols.size(); ++i) {
+      if (matcher.computeRMSD(acpt_mols[i].second) <= pose_rmsd) {
+        return false;
+      }
+    }
+    return true;
+  }
 } // namespace
 
 namespace fragdock {
@@ -539,39 +550,38 @@ int main(int argc, char **argv){
 
     outputcsv << identifier << "," << best_score << endl;
 
-
+    
+    // output_poses: (score, OBMol) vector of poses to output
+    vector<pair<fltype, OpenBabel::OBMol> > output_poses;
     int cand_num = out_mols.size();
-    vector<fltype> process_score;
-    vector<OpenBabel::OBMol> process_mol;
+
+    // select output poses from out_mols with reference to config.pose_rmsd
     for (int cand = 0; cand < cand_num; ++cand) {
       int lig_ind = out_mols[cand].second.first;
       fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
       // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
       OpenBabel::OBMol mol = ligands[lig_ind];
       OpenBabel::UpdateCoords(mol, out_mols[cand].second.second);
-
       OpenBabel::processMol(mol);
-      OpenBabel::Matcher matcher(mol);
-      // check RMSD
-      for (int acpt = 0; acpt <= process_mol.size(); ++acpt) {
-        if (acpt == process_mol.size()) { // finish the candidate pose search
-          outputs.write(mol);
-          process_score.push_back(score);
-          process_mol.push_back(mol);
-          logs::lout << "  " << process_score.size() << "th pose's score : " << score << endl;
-          break;
-        }
-        // logs::lout << "(candidate index, accepted index)=(" << cand << ", " << acpt << ")\tRMSD : " << matcher.computeRMSD(process_mol[acpt]) << endl;
-        if (matcher.computeRMSD(process_mol[acpt]) <= config.pose_rmsd) { // too close to accepted poses
-          break;
-        }
+      // OpenBabel::Matcher matcher(mol);
+
+      // check RMSD of candidate mol and accepted mols
+      if (can_output(mol, output_poses, config.pose_rmsd)) {
+        output_poses.push_back(make_pair(score, mol));
       }
-      if (process_score.size() == config.output_poses) { // reach requested number
+
+      if (output_poses.size() == config.output_poses) { // reach requested number
         break;
       }
       if (cand == cand_num-1) { // cannot find requested number
-        logs::lout << logs::info << "Couldn't find config.output_poses" << endl;
+        logs::lout << logs::info << "Couldn't find config.output_poses pose." << endl;
       }
+    }
+
+    // write poses
+    for (int i = 0; i < output_poses.size(); ++i) {
+      logs::lout << "  " << (i + 1) << "th pose's score : " << output_poses[i].first << endl;
+      outputs.write(output_poses[i].second);
     }
   }
   outputs.close();
