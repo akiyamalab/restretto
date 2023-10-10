@@ -1,5 +1,10 @@
 #include "RMSD.hpp"
 
+/*
+ Reference: openbabel-2-4, openbabel/tools/orbrms.cpp
+ GitHub URL: https://github.com/openbabel/openbabel/blob/openbabel-2-4-x/tools/obrms.cpp
+*/
+
 namespace OpenBabel{
   bool AtomDistanceSorter::operator()(OpenBabel::OBAtom *l, OpenBabel::OBAtom *r) const {
     double ld = ref.distSq(l->GetVector());

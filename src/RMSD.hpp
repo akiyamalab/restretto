@@ -14,6 +14,11 @@
 #ifndef RMSD_H_
 #define RMSD_H_
 
+/*
+ Reference: openbabel-2-4-x, openbabel/tools/orbrms.cpp
+ GitHub URL: https://github.com/openbabel/openbabel/blob/openbabel-2-4-x/tools/obrms.cpp
+*/
+
 namespace OpenBabel {
 	class AtomDistanceSorter {
     vector3 ref;
