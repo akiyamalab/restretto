@@ -171,17 +171,6 @@ namespace {
     }
     return ligands_mol;
   }
-
-  // whether the candidate mol has RMSD > pose_rmsd with all accepted mols (RMSD > pose_rmsd: true)
-  bool can_output(OpenBabel::OBMol& cand_mol, std::vector<std::pair<fltype, OpenBabel::OBMol> >& acpt_mols, fltype pose_rmsd) {
-    OpenBabel::Matcher matcher(cand_mol);
-    for (int i = 0; i < acpt_mols.size(); ++i) {
-      if (matcher.computeRMSD(acpt_mols[i].second) <= pose_rmsd) {
-        return false;
-      }
-    }
-    return true;
-  }
 } // namespace
 
 namespace fragdock {
@@ -550,35 +539,30 @@ int main(int argc, char **argv){
 
     outputcsv << identifier << "," << best_score << endl;
 
-    
-    // output_poses: (score, OBMol) vector of poses to output
-    vector<pair<fltype, OpenBabel::OBMol> > output_poses;
-    int cand_num = out_mols.size();
+
+    vector<OpenBabel::OBMol> output_pose_mols;
 
     // select output poses from out_mols with reference to config.pose_rmsd
-    for (int cand = 0; cand < cand_num; ++cand) {
+    for (int cand = 0; cand < out_mols.size() && output_pose_mols.size() < config.output_poses; ++cand) {
       int lig_ind = out_mols[cand].second.first;
       fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
       // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
+
       OpenBabel::OBMol mol = ligands[lig_ind];
       OpenBabel::UpdateCoords(mol, out_mols[cand].second.second);
-      OpenBabel::processMol(mol);
-      // OpenBabel::Matcher matcher(mol);
 
       // check RMSD of candidate mol and accepted mols
-      if (can_output(mol, output_poses, config.pose_rmsd)) {
-        output_poses.push_back(make_pair(score, mol));
-      }
-
-      if (output_poses.size() == config.output_poses) { // reach requested number
-        break;
+      fltype minRMSD = OpenBabel::calc_minRMSD(mol, output_pose_mols);
+      // logs::lout << "minimum RMSD : " << minRMSD << endl;
+      if (minRMSD > config.pose_rmsd) {
+        output_pose_mols.push_back(mol);
+        logs::lout << "  " << output_pose_mols.size() << "th pose's score : " << score << endl;
       }
     }
 
     // write poses
-    for (int i = 0; i < output_poses.size(); ++i) {
-      logs::lout << "  " << (i + 1) << "th pose's score : " << output_poses[i].first << endl;
-      outputs.write(output_poses[i].second);
+    for (int i = 0; i < output_pose_mols.size(); ++i) {
+      outputs.write(output_pose_mols[i]);
     }
   }
   outputs.close();

@@ -9,6 +9,8 @@
 #include <openbabel/graphsym.h>
 #include <openbabel/query.h>
 
+#include "common.hpp"
+
 #ifndef RMSD_H_
 #define RMSD_H_
 
@@ -59,8 +61,8 @@ namespace OpenBabel {
     }
   };
 	
-  //preprocess molecule into a standardized state for heavy atom rmsd computation
-  void processMol(OpenBabel::OBMol& mol);
+  // calculate minimum RMSD between mol and ref_mols
+  fltype calc_minRMSD(const OpenBabel::OBMol& mol, const std::vector<OpenBabel::OBMol>& ref_mols);
 }
 
 #endif
