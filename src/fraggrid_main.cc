@@ -45,7 +45,7 @@ namespace {
       ("grid,g", value<std::string>(), "grid folder")
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
       ("log", value<std::string>(), "log file")
-      ("poses-per-lig", value<int64_t>(), "# of output poses");
+      ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -68,7 +68,7 @@ namespace {
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
-    if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["pose"].as<int64_t>();
+    if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-ligand"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
