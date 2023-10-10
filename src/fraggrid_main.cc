@@ -68,7 +68,7 @@ namespace {
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
-    if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-ligand"].as<int64_t>();
+    if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
