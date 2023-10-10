@@ -45,7 +45,7 @@ namespace {
       ("grid,g", value<std::string>(), "grid folder")
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
       ("log", value<std::string>(), "log file")
-      ("pose,p", value<int64_t>(), "# of output poses");
+      ("poses-per-lig", value<int64_t>(), "# of output poses");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
