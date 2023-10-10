@@ -13,6 +13,7 @@
 #include "Optimizer.hpp"
 #include "MinValuesVector.hpp"
 #include "FragmentEnergyGridContainer.hpp"
+#include "RMSD.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -43,7 +44,8 @@ namespace {
       ("receptor,r", value<std::string>(), "receptor file (.pdb file)")
       ("grid,g", value<std::string>(), "grid folder")
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
-      ("log", value<std::string>(), "log file");
+      ("log", value<std::string>(), "log file")
+      ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -66,6 +68,8 @@ namespace {
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
+    if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
+    if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
   }
@@ -504,6 +508,9 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
+  
+  logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
+  logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
 
   for (const auto& p : lig_map) {
     const string& identifier = p.first;
@@ -532,19 +539,30 @@ int main(int argc, char **argv){
 
     outputcsv << identifier << "," << best_score << endl;
 
-    // logs::lout << "mol : " << title << endl;
 
-    for (int j = 0; j < OUTPUT_POSES_PER_LIGAND && j < out_mols.size(); ++j) {
-      int lig_ind = out_mols[j].second.first;
-      fltype score = (out_mols[j].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
-      // fltype score = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
-      logs::lout << "  " << (j + 1) << "th pose's score : " << score << endl;
-      OpenBabel::OBMol obmol = ligands[lig_ind];
-      OpenBabel::UpdateCoords(obmol, out_mols[j].second.second);
-      outputs.write(obmol);
+    vector<OpenBabel::OBMol> out_pose_mols;
 
-      // obmol.AddHydrogens();
-      // Molecule mol = format::toFragmentMol(obmol);
+    // select output poses from out_mols with reference to config.pose_rmsd
+    for (int cand = 0; cand < out_mols.size() && out_pose_mols.size() < config.poses_per_lig; ++cand) {
+      int lig_ind = out_mols[cand].second.first;
+      fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
+      // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
+
+      OpenBabel::OBMol mol = ligands[lig_ind];
+      OpenBabel::UpdateCoords(mol, out_mols[cand].second.second);
+
+      // check RMSD of candidate mol and accepted mols
+      fltype min_rmsd = OpenBabel::calc_minRMSD(mol, out_pose_mols);
+      // logs::lout << "minimum RMSD : " << min_rmsd << endl;
+      if (min_rmsd > config.pose_rmsd) {
+        out_pose_mols.push_back(mol);
+        logs::lout << "  " << out_pose_mols.size() << "th pose's score : " << score << endl;
+      }
+    }
+
+    // write poses
+    for (int i = 0; i < out_pose_mols.size(); ++i) {
+      outputs.write(out_pose_mols[i]);
     }
   }
   outputs.close();
