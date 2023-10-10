@@ -68,7 +68,7 @@ namespace {
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
-    if (vmap.count("pose")) conf.output_poses = vmap["pose"].as<int64_t>();
+    if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["pose"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
@@ -509,8 +509,8 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
   
-  logs::lout << logs::debug << "config.output_poses : " << config.output_poses << endl;
-  logs::lout << logs::debug << "config.pose_rmsd    : " << config.pose_rmsd << endl;
+  logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
+  logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
 
   for (const auto& p : lig_map) {
     const string& identifier = p.first;
@@ -540,10 +540,10 @@ int main(int argc, char **argv){
     outputcsv << identifier << "," << best_score << endl;
 
 
-    vector<OpenBabel::OBMol> output_pose_mols;
+    vector<OpenBabel::OBMol> out_pose_mols;
 
     // select output poses from out_mols with reference to config.pose_rmsd
-    for (int cand = 0; cand < out_mols.size() && output_pose_mols.size() < config.output_poses; ++cand) {
+    for (int cand = 0; cand < out_mols.size() && out_pose_mols.size() < config.poses_per_lig; ++cand) {
       int lig_ind = out_mols[cand].second.first;
       fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
       // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
@@ -552,17 +552,17 @@ int main(int argc, char **argv){
       OpenBabel::UpdateCoords(mol, out_mols[cand].second.second);
 
       // check RMSD of candidate mol and accepted mols
-      fltype minRMSD = OpenBabel::calc_minRMSD(mol, output_pose_mols);
-      // logs::lout << "minimum RMSD : " << minRMSD << endl;
-      if (minRMSD > config.pose_rmsd) {
-        output_pose_mols.push_back(mol);
-        logs::lout << "  " << output_pose_mols.size() << "th pose's score : " << score << endl;
+      fltype min_rmsd = OpenBabel::calc_minRMSD(mol, out_pose_mols);
+      // logs::lout << "minimum RMSD : " << min_rmsd << endl;
+      if (min_rmsd > config.pose_rmsd) {
+        out_pose_mols.push_back(mol);
+        logs::lout << "  " << out_pose_mols.size() << "th pose's score : " << score << endl;
       }
     }
 
     // write poses
-    for (int i = 0; i < output_pose_mols.size(); ++i) {
-      outputs.write(output_pose_mols[i]);
+    for (int i = 0; i < out_pose_mols.size(); ++i) {
+      outputs.write(out_pose_mols[i]);
     }
   }
   outputs.close();

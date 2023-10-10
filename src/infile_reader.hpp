@@ -22,7 +22,7 @@ namespace format {
     ReuseStrategy reuse_grid = ReuseStrategy::OFFLINE;
     bool reorder = true;
     int64_t mem_size;
-    int64_t output_poses = 1;
+    int64_t poses_per_lig = 1;
     fltype pose_rmsd = 0.5;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
