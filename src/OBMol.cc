@@ -235,4 +235,11 @@ namespace OpenBabel{
     }
     return mol;
   }
+  void SetProperty(OpenBabel::OBMol& mol, const std::string& key, const std::string& value){
+    OpenBabel::OBPairData *dp = new OpenBabel::OBPairData;
+    dp->SetAttribute(key);
+    dp->SetValue(value);
+    mol.SetData(dp);
+  }
+
 }

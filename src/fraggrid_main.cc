@@ -555,6 +555,7 @@ int main(int argc, char **argv){
       fltype min_rmsd = OpenBabel::calc_minRMSD(mol, out_pose_mols);
       // logs::lout << "minimum RMSD : " << min_rmsd << endl;
       if (min_rmsd > config.pose_rmsd) {
+        OpenBabel::SetProperty(mol, "restretto_score", std::to_string(score));
         out_pose_mols.push_back(mol);
         logs::lout << "  " << out_pose_mols.size() << "th pose's score : " << score << endl;
       }
