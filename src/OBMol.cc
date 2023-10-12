@@ -241,5 +241,7 @@ namespace OpenBabel{
     dp->SetValue(value);
     mol.SetData(dp);
   }
-
+  void SetProperty(OpenBabel::OBMol& mol, const std::string& key, fltype value){
+    SetProperty(mol, key, std::to_string(value));
+  }
 }
