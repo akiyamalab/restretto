@@ -108,7 +108,7 @@ namespace {
     return score_num / 2 + (k - search_num / 2) * ratio;
   }
 
-  fltype calcscore(const fragdock::Molecule& mol, const std::vector<fragdock::AtomEnergyGrid>& atom_grids) {
+  fltype calcInterEnergy(const fragdock::Molecule& mol, const std::vector<fragdock::AtomEnergyGrid>& atom_grids) {
     fltype ret = 0.0;
     for (auto& a : mol.getAtoms()) {
       ret += atom_grids[a.getXSType()].getEnergy(a);
@@ -256,7 +256,7 @@ int main(int argc, char **argv){
           ++loopcnt;
           Molecule mmol = mol;
           mmol.translate(atom_grids[0].convert(gx, gy, gz));
-          scores[rotid].addEnergy(x, y, z, calcscore(mmol, atom_grids));
+          scores[rotid].addEnergy(x, y, z, calcInterEnergy(mmol, atom_grids));
         }
       }
     // logs::lout << logs::info << "end calc grid score" << endl;

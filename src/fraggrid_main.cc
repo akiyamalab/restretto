@@ -512,7 +512,7 @@ int main(int argc, char **argv){
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
 
-  for (const auto& p : lig_map) {
+  for (const auto& p : lig_map) { // for each ligand
     const string& identifier = p.first;
     int i = p.second;
     const vector<pos_param>& poss = pos_param_vec[i].getValues();
@@ -523,17 +523,19 @@ int main(int argc, char **argv){
       Molecule mol = ligands_mol[param.inp_ind];
       mol.rotate(rotations_ligand[param.rotid]);
       mol.translate(pos);
-      fltype opt_score = opt_grid.optimize(mol);
-      // fltype opt_score = param.score;
+      fltype opt_total_energy = opt_grid.optimize(mol);
+      // fltype opt_total_energy = param.score;
 
-      out_mols[j] = make_pair(opt_score, make_pair(param.inp_ind, mol));
+      out_mols[j] = make_pair(opt_total_energy, make_pair(param.inp_ind, mol));
     }
     sort(out_mols.begin(), out_mols.end());
     fltype best_intra = LIMIT_ENERGY;
+    fltype best_inter = LIMIT_ENERGY;
     fltype best_score = LIMIT_ENERGY;
     if (out_mols.size() > 0) {
       best_intra = ligands_mol[out_mols[0].second.first].getIntraEnergy();
-      best_score = out_mols[0].first / (1 + 0.05846 * ligands_mol[out_mols[0].second.first].getNrots());
+      best_inter = out_mols[0].first - best_intra;
+      best_score = best_inter / (1 + 0.05846 * ligands_mol[out_mols[0].second.first].getNrots());
     }
     ranking.push_back(make_pair(best_score, identifier));
 
@@ -545,7 +547,8 @@ int main(int argc, char **argv){
     // select output poses from out_mols with reference to config.pose_rmsd
     for (int cand = 0; cand < out_mols.size() && out_pose_mols.size() < config.poses_per_lig; ++cand) {
       int lig_ind = out_mols[cand].second.first;
-      fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
+      fltype inter_energy = (out_mols[cand].first - best_intra);
+      fltype score = inter_energy / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
       // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
 
       OpenBabel::OBMol mol = ligands[lig_ind];

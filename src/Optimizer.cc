@@ -51,7 +51,7 @@ namespace fragdock {
     srand(0); // fix seed
 
     // hill climbing
-    fltype opt = calcscore(mol);
+    fltype opt = calcInterEnergy(mol) + mol.getIntraEnergy();
     const fltype pi = acos(-1.0);
     const int NEAREST_NUM = 200;
     fltype trans_step = 0.5;
@@ -75,7 +75,7 @@ namespace fragdock {
         tmp_mol.translate(center + dv);
         // tmp_mol.translate(dv);
 
-        fltype val = calcscore(tmp_mol);
+        fltype val = calcInterEnergy(tmp_mol) + mol.getIntraEnergy();
         if(val < next_val) {
           next_val = val;
           next_mol = tmp_mol;

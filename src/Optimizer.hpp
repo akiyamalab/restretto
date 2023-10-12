@@ -15,7 +15,7 @@ namespace fragdock {
   class Optimizer_Grid {
     const std::vector<fragdock::AtomEnergyGrid>& atom_grids;
     // const Molecule& receptor;
-    fltype calcscore(const Molecule &mol) const {
+    fltype calcInterEnergy(const Molecule &mol) const {
       fltype ret = 0.0;
       for (auto& a : mol.getAtoms()) {
         ret += atom_grids[a.getXSType()].getEnergy(a);
