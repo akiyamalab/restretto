@@ -111,7 +111,7 @@ namespace {
   fltype calcInterEnergy(const fragdock::Molecule& mol, const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) {
     fltype ret = 0.0;
     for (auto& a : mol.getAtoms()) {
-      ret += atom_grids[a.getXSType()].getEnergy(a);
+      ret += atom_grids[a.getXSType()].getInterEnergy(a);
     }
     return ret;
   }
@@ -272,7 +272,7 @@ int main(int argc, char **argv){
       for (int x = 0; x < search_num.x; ++x) {
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
-            q[ind].push(pos_param(rotid, x, y, z, scores[rotid].getEnergy(x, y, z), lig_ind));
+            q[ind].push(pos_param(rotid, x, y, z, scores[rotid].getInterEnergy(x, y, z), lig_ind));
             if (q[ind].size() > top_margin)
               q[ind].pop();
           }

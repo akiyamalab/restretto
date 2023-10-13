@@ -29,7 +29,7 @@ namespace fragdock {
             // fragdock::Atom a = atom;
             // fragdock::Molecule mol(std::vector<fragdock::Atom>(1, atom));
             atom.setPos(inter_energy_grids[i].convert(x, y, z));
-            inter_energy_grids[i].setEnergy(x, y, z, ec.getEnergy(atom, receptor_mol));
+            inter_energy_grids[i].setInterEnergy(x, y, z, ec.getEnergy(atom, receptor_mol));
           }
         }
       }

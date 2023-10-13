@@ -18,7 +18,7 @@ namespace fragdock {
     fltype calcInterEnergy(const Molecule &mol) const {
       fltype ret = 0.0;
       for (auto& a : mol.getAtoms()) {
-        ret += atom_grids[a.getXSType()].getEnergy(a);
+        ret += atom_grids[a.getXSType()].getInterEnergy(a);
       }
       return ret;
     }

@@ -2,7 +2,7 @@
 // #define TRILINEAR
 
 namespace fragdock {
-  fltype InterEnergyGrid::getEnergy(int x, int y, int z) const {
+  fltype InterEnergyGrid::getInterEnergy(int x, int y, int z) const {
     if (x < 0 or y < 0 or z < 0 or x >= num.x or y >= num.y or z >= num.z) return LIMIT_ENERGY;
     // x = max(0, min(x, num.x - 1));
     // y = max(0, min(y, num.y - 1));
@@ -10,20 +10,20 @@ namespace fragdock {
     return grid[(x*num.y+y)*num.z+z];
   }
 
-  fltype InterEnergyGrid::getEnergy(const Vector3d &pos) const {
-    return getEnergy(convertX(pos), convertY(pos), convertZ(pos)); // nearest grid point
+  fltype InterEnergyGrid::getInterEnergy(const Vector3d &pos) const {
+    return getInterEnergy(convertX(pos), convertY(pos), convertZ(pos)); // nearest grid point
   }
   void InterEnergyGrid::parse(std::ifstream& ifs) {
     ifs.read(reinterpret_cast<char*>(&center), sizeof(center));
     ifs.read(reinterpret_cast<char*>(&pitch), sizeof(pitch));
     ifs.read(reinterpret_cast<char*>(&num), sizeof(num));
-    initEnergy();
+    initInterEnergy();
     for(int x = 0; x < num.x; x++) {
       for(int y = 0; y < num.y; y++) {
         for(int z = 0; z < num.z; z++) {
           fltype val;
           ifs.read(reinterpret_cast<char*>(&val), sizeof(val));
-          setEnergy(x, y, z, val);
+          setInterEnergy(x, y, z, val);
         }
       }
     }
@@ -47,7 +47,7 @@ namespace fragdock {
     for(int x = 0; x < num.x; x++) {
       for(int y = 0; y < num.y; y++) {
         for(int z = 0; z < num.z; z++) {
-          fltype val = getEnergy(x, y, z);
+          fltype val = getInterEnergy(x, y, z);
           ofs.write(reinterpret_cast<const char*>(&val), sizeof(val));
         }
       }

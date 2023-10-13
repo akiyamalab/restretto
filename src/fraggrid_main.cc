@@ -192,7 +192,7 @@ namespace fragdock {
               mindist = std::min(mindist, (pos - a).abs());
             }
           }
-          grid.setEnergy(x, y, z, mindist);
+          grid.setInterEnergy(x, y, z, mindist);
         }
       }
     }
@@ -452,7 +452,7 @@ int main(int argc, char **argv){
         for (int x = 0, gx = gs.x; x < search_num.x; ++x, gx += ratio.x)
         for (int y = 0, gy = gs.y; y < search_num.y; ++y, gy += ratio.y)
         for (int z = 0, gz = gs.z; z < search_num.z; ++z, gz += ratio.z)
-          scores[rotid].addEnergy(x, y, z, fg.getGrid().getEnergy(gx + frag_rel_pos[rotid][j].x, gy + frag_rel_pos[rotid][j].y, gz + frag_rel_pos[rotid][j].z));
+          scores[rotid].addEnergy(x, y, z, fg.getGrid().getInterEnergy(gx + frag_rel_pos[rotid][j].x, gy + frag_rel_pos[rotid][j].y, gz + frag_rel_pos[rotid][j].z));
           // TODO: can be expressed as lig_grid += fg.getGrid() ??
       }
 
@@ -468,7 +468,7 @@ int main(int argc, char **argv){
       for (int x = 0; x < search_num.x; ++x) {
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
-            const fltype score = scores[rotid].getEnergy(x, y, z);
+            const fltype score = scores[rotid].getInterEnergy(x, y, z);
             if (score < OUTPUT_SCORE_THRESHOLD) {
               pos_param_vec[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
               // q[ind].push(pos_param(rotid, x, y, z, score, lig_ind));

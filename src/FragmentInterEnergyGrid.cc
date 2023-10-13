@@ -28,7 +28,7 @@ namespace fragdock {
             if (rot_id & 7) {
               fltype collision = 2;
               fltype far = 6;
-              fltype dist = distance_grid.getEnergy(x, y, z);
+              fltype dist = distance_grid.getInterEnergy(x, y, z);
               if (dist < collision) {
                 // collision
                 continue;
@@ -45,7 +45,7 @@ namespace fragdock {
 
               const AtomInterEnergyGrid& agrid = atom_grids[atom.getXSType()];
               // atom += agrid.convert(x, y, z);
-              fltype diff = agrid.getEnergy(atom + agrid.convert(x, y, z));
+              fltype diff = agrid.getInterEnergy(atom + agrid.convert(x, y, z));
               // atom -= agrid.convert(x, y, z);
 
               sum += diff;
@@ -53,8 +53,8 @@ namespace fragdock {
                 break;
               }
             }
-            if (sum < grid.getEnergy(x, y, z)) {
-              grid.setEnergy(x, y, z, sum);
+            if (sum < grid.getInterEnergy(x, y, z)) {
+              grid.setInterEnergy(x, y, z, sum);
             }
           }
         }

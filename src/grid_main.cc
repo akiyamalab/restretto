@@ -76,7 +76,7 @@ namespace {
       for(int y=0; y<energy_grid.getNum().y; y++) {
         for(int z=0; z<energy_grid.getNum().z; z++) {
           atom.setPos(energy_grid.convert(x, y, z));
-          energy_grid.setEnergy(x, y, z, calc.getEnergy(atom, receptor_mol));
+          energy_grid.setInterEnergy(x, y, z, calc.getEnergy(atom, receptor_mol));
         }
       }
     }
