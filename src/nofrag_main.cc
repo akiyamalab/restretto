@@ -162,7 +162,7 @@ int main(int argc, char **argv){
   const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1;
 
 
-  EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
+  InterEnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
   vector<Molecule> ligands_mol(ligs_sz);
 
@@ -239,7 +239,7 @@ int main(int argc, char **argv){
 
     int rotsz = rotations.size();
 
-    vector<EnergyGrid> scores(rotsz, EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
+    vector<InterEnergyGrid> scores(rotsz, InterEnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
 
 
     auto t1 = std::chrono::system_clock::now();

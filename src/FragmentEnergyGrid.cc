@@ -4,7 +4,7 @@ namespace fragdock {
   FragmentEnergyGrid::FragmentEnergyGrid(const Fragment& orig_frag,
                                          const std::vector<Vector3d>& rot_angles,
                                          const std::vector<AtomEnergyGrid>& atom_grids,
-                                         const EnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
+                                         const InterEnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
     using namespace std;
     if(atom_grids.empty()) {
       cerr << "atom_grids is empty" << endl;
@@ -12,7 +12,7 @@ namespace fragdock {
     }
     assert(orig_frag.getCenter().abs() < EPS);
     const Point3d<int>& num = atom_grids[0].getNum();
-    grid = EnergyGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), num, LIMIT_ENERGY);
+    grid = InterEnergyGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), num, LIMIT_ENERGY);
     int rotsz = rot_angles.size();
     if (orig_frag.size() <= 1) rotsz = 1;
 
@@ -78,7 +78,7 @@ namespace fragdock {
   //   using namespace std;
   //   ofstream ofs(filename.c_str(), std::ios::binary);
   //   if(!ofs){
-  //     cerr << "EnergyGrid::WriteFile() : file could not open. " << filename << endl;
+  //     cerr << "InterEnergyGrid::WriteFile() : file could not open. " << filename << endl;
   //     return ;
   //   }
   //   for(int i = 0; i < grids.size(); i++)

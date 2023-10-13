@@ -13,7 +13,7 @@ namespace fragdock {
   /**
    * A 3D grid of energy values.
   */
-  class EnergyGrid {
+  class InterEnergyGrid {
   private:
     /* initialize the energy grid with a real value ini */
     void initEnergy(fltype ini) { this->grid = std::vector<fltype>(num.x*num.y*num.z, ini); }
@@ -28,12 +28,12 @@ namespace fragdock {
     Point3d<int> num; /* The numbers of grid points for each dimension */
 
   public:
-    EnergyGrid() {}
-    EnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num)
+    InterEnergyGrid() {}
+    InterEnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num)
       : center(center), pitch(pitch), num(num) { initEnergy(); }
-    EnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num, fltype ini)
+    InterEnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num, fltype ini)
       : center(center), pitch(pitch), num(num) { initEnergy(ini); }
-    ~EnergyGrid() {}
+    ~InterEnergyGrid() {}
 
     /* set an energy for grid indice [x_ind,y_ind,z_ind]. Note that the x,y,z are not coordinates */
     void setEnergy(int x_ind, int y_ind, int z_ind, fltype val) { grid[(x_ind*num.y+y_ind)*num.z+z_ind] = val; }

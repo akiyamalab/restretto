@@ -174,12 +174,12 @@ namespace {
 } // namespace
 
 namespace fragdock {
-  EnergyGrid makeDistanceGrid(const Point3d<fltype>& center,
+  InterEnergyGrid makeDistanceGrid(const Point3d<fltype>& center,
                               const Point3d<fltype>& pitch,
                               const Point3d<int>& num,
                               const Molecule& receptor_mol) {
 
-    EnergyGrid grid(center, pitch, num);
+    InterEnergyGrid grid(center, pitch, num);
     for(int x=0; x<grid.getNum().x; x++) {
       for(int y=0; y<grid.getNum().y; y++) {
         for(int z=0; z<grid.getNum().z; z++) {
@@ -237,7 +237,7 @@ int main(int argc, char **argv){
   const Point3d<int> ratio = utils::round(config.grid.search_pitch / config.grid.score_pitch);
   const Point3d<fltype>& search_pitch = config.grid.search_pitch;
   const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1; // # of search grid points (conformer scoring)
-  const EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
+  const InterEnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
 
   // The number how many fragment grids can be stored in memory.
@@ -377,7 +377,7 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] END REORDERING AND SOLVING MCFP" << endl;
 
-  EnergyGrid distance_grid = makeDistanceGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol);
+  InterEnergyGrid distance_grid = makeDistanceGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol);
 
   // Amount of calculation cost reduction by reusing fragment grid
   int reduces = 0;
@@ -421,8 +421,8 @@ int main(int argc, char **argv){
     /* relative fragment positions (from center of a ligand) on the scoring grid for each rotation */
     vector<vector<Point3d<int> > > frag_rel_pos(rotations_ligand.size(), vector<Point3d<int> >(frag_sz));
 
-    vector<EnergyGrid> scores(rotations_ligand.size(), EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
-    // vector<EnergyGrid> scores(rotations_ligand.size(), EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, 0.0));
+    vector<InterEnergyGrid> scores(rotations_ligand.size(), InterEnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
+    // vector<InterEnergyGrid> scores(rotations_ligand.size(), InterEnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, 0.0));
 
     for (int rotid = 0; rotid < rotations_ligand.size(); ++rotid) {
       FragmentsVector fv = fragvecs[lig_ind];
