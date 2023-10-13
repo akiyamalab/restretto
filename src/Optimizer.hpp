@@ -1,5 +1,5 @@
 #include "common.hpp"
-#include "AtomEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
 #include "Molecule.hpp"
 #include "utils.hpp"
 #ifndef OPTIMIZER_H_
@@ -13,17 +13,17 @@ namespace fragdock {
   };
 
   class Optimizer_Grid {
-    const std::vector<fragdock::AtomEnergyGrid>& atom_grids;
+    const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids;
     // const Molecule& receptor;
-    fltype calcscore(const Molecule &mol) const {
+    fltype calcInterEnergy(const Molecule &mol) const {
       fltype ret = 0.0;
       for (auto& a : mol.getAtoms()) {
-        ret += atom_grids[a.getXSType()].getEnergy(a);
+        ret += atom_grids[a.getXSType()].getInterEnergy(a);
       }
       return ret;
     }
   public:
-    explicit Optimizer_Grid(const std::vector<fragdock::AtomEnergyGrid>& atom_grids) : atom_grids(atom_grids) {}
+    explicit Optimizer_Grid(const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) : atom_grids(atom_grids) {}
     fltype optimize(Molecule &mol) const;
   };
 }

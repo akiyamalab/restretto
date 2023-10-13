@@ -3,7 +3,7 @@
 #include "OBMol.hpp"
 #include "infile_reader.hpp"
 #include "log_writer_stream.hpp"
-#include "AtomEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
 #include "EnergyCalculator.hpp"
 #include "Optimizer.hpp"
 
@@ -108,10 +108,10 @@ namespace {
     return score_num / 2 + (k - search_num / 2) * ratio;
   }
 
-  fltype calcscore(const fragdock::Molecule& mol, const std::vector<fragdock::AtomEnergyGrid>& atom_grids) {
+  fltype calcInterEnergy(const fragdock::Molecule& mol, const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) {
     fltype ret = 0.0;
     for (auto& a : mol.getAtoms()) {
-      ret += atom_grids[a.getXSType()].getEnergy(a);
+      ret += atom_grids[a.getXSType()].getInterEnergy(a);
     }
     return ret;
   }
@@ -141,7 +141,7 @@ int main(int argc, char **argv){
   // prepare atomgrids and rotations
   // ================================================================
   logs::lout << logs::info << "[start] read energy grids" << endl;
-  vector<AtomEnergyGrid> atom_grids = AtomEnergyGrid::readAtomGrids(config.grid_folder);
+  vector<AtomInterEnergyGrid> atom_grids = AtomInterEnergyGrid::readAtomGrids(config.grid_folder);
   logs::lout << logs::info << "[ end ] read energy grids" << endl;
   // logs::lout << "atom grid size: " << atom_grids.size() << endl;
 
@@ -162,7 +162,7 @@ int main(int argc, char **argv){
   const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1;
 
 
-  EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
+  InterEnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
   vector<Molecule> ligands_mol(ligs_sz);
 
@@ -239,7 +239,7 @@ int main(int argc, char **argv){
 
     int rotsz = rotations.size();
 
-    vector<EnergyGrid> scores(rotsz, EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
+    vector<InterEnergyGrid> scores(rotsz, InterEnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
 
 
     auto t1 = std::chrono::system_clock::now();
@@ -256,7 +256,7 @@ int main(int argc, char **argv){
           ++loopcnt;
           Molecule mmol = mol;
           mmol.translate(atom_grids[0].convert(gx, gy, gz));
-          scores[rotid].addEnergy(x, y, z, calcscore(mmol, atom_grids));
+          scores[rotid].addEnergy(x, y, z, calcInterEnergy(mmol, atom_grids));
         }
       }
     // logs::lout << logs::info << "end calc grid score" << endl;
@@ -272,7 +272,7 @@ int main(int argc, char **argv){
       for (int x = 0; x < search_num.x; ++x) {
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
-            q[ind].push(pos_param(rotid, x, y, z, scores[rotid].getEnergy(x, y, z), lig_ind));
+            q[ind].push(pos_param(rotid, x, y, z, scores[rotid].getInterEnergy(x, y, z), lig_ind));
             if (q[ind].size() > top_margin)
               q[ind].pop();
           }

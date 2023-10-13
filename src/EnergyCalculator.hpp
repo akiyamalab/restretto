@@ -1,5 +1,5 @@
 #include "common.hpp"
-#include "EnergyGrid.hpp"
+#include "InterEnergyGrid.hpp"
 #include "Molecule.hpp"
 #include <vector>
 #ifndef ENERGY_CALCULATOR_H_

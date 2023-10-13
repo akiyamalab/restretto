@@ -1,5 +1,5 @@
 #include "common.hpp"
-#include "EnergyGrid.hpp"
+#include "InterEnergyGrid.hpp"
 #include <string>
 #include <vector>
 

@@ -5,14 +5,14 @@
 #include "MoleculeToFragments.hpp"
 #include "infile_reader.hpp"
 #include "log_writer_stream.hpp"
-#include "AtomEnergyGrid.hpp"
-#include "FragmentEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
+#include "FragmentInterEnergyGrid.hpp"
 #include "FragmentsVector.hpp"
 #include "EnergyCalculator.hpp"
 #include "CalcMCFP.hpp"
 #include "Optimizer.hpp"
 #include "MinValuesVector.hpp"
-#include "FragmentEnergyGridContainer.hpp"
+#include "FragmentInterEnergyGridContainer.hpp"
 #include "RMSD.hpp"
 
 #include <iostream>
@@ -174,12 +174,12 @@ namespace {
 } // namespace
 
 namespace fragdock {
-  EnergyGrid makeDistanceGrid(const Point3d<fltype>& center,
+  InterEnergyGrid makeDistanceGrid(const Point3d<fltype>& center,
                               const Point3d<fltype>& pitch,
                               const Point3d<int>& num,
                               const Molecule& receptor_mol) {
 
-    EnergyGrid grid(center, pitch, num);
+    InterEnergyGrid grid(center, pitch, num);
     for(int x=0; x<grid.getNum().x; x++) {
       for(int y=0; y<grid.getNum().y; y++) {
         for(int z=0; z<grid.getNum().z; z++) {
@@ -192,7 +192,7 @@ namespace fragdock {
               mindist = std::min(mindist, (pos - a).abs());
             }
           }
-          grid.setEnergy(x, y, z, mindist);
+          grid.setInterEnergy(x, y, z, mindist);
         }
       }
     }
@@ -227,7 +227,7 @@ int main(int argc, char **argv){
   // prepare atomgrids and rotations
   // ================================================================
   logs::lout << logs::info << "[start] read energy grids" << endl;
-  vector<AtomEnergyGrid> atom_grids = AtomEnergyGrid::readAtomGrids(config.grid_folder);
+  vector<AtomInterEnergyGrid> atom_grids = AtomInterEnergyGrid::readAtomGrids(config.grid_folder);
   logs::lout << logs::info << "[ end ] read energy grids" << endl;
   // logs::lout << "atom grid size: " << atom_grids.size() << endl;
 
@@ -237,7 +237,7 @@ int main(int argc, char **argv){
   const Point3d<int> ratio = utils::round(config.grid.search_pitch / config.grid.score_pitch);
   const Point3d<fltype>& search_pitch = config.grid.search_pitch;
   const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1; // # of search grid points (conformer scoring)
-  const EnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
+  const InterEnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
 
   // The number how many fragment grids can be stored in memory.
@@ -377,7 +377,7 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] END REORDERING AND SOLVING MCFP" << endl;
 
-  EnergyGrid distance_grid = makeDistanceGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol);
+  InterEnergyGrid distance_grid = makeDistanceGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol);
 
   // Amount of calculation cost reduction by reusing fragment grid
   int reduces = 0;
@@ -402,13 +402,13 @@ int main(int argc, char **argv){
   }
 
   typedef format::DockingConfiguration::ReuseStrategy Strategy;
-  FragmentEnergyGridContainer frag_grid_container;
+  FragmentInterEnergyGridContainer frag_grid_container;
   if (config.reuse_grid == Strategy::ONLINE)
-    frag_grid_container = FragmentEnergyGridContainer(FGRID_SIZE);
+    frag_grid_container = FragmentInterEnergyGridContainer(FGRID_SIZE);
   else if (config.reuse_grid == Strategy::OFFLINE) 
-    frag_grid_container = FragmentEnergyGridContainer(FGRID_SIZE, nextgridsp);
+    frag_grid_container = FragmentInterEnergyGridContainer(FGRID_SIZE, nextgridsp);
   else // config.reuse_grid == Strategy::NONE
-    frag_grid_container = FragmentEnergyGridContainer(1);
+    frag_grid_container = FragmentInterEnergyGridContainer(1);
 
   for (int i = 0; i < ligs_sz; ++i) {
     int lig_ind = sorted_lig[i];
@@ -421,8 +421,8 @@ int main(int argc, char **argv){
     /* relative fragment positions (from center of a ligand) on the scoring grid for each rotation */
     vector<vector<Point3d<int> > > frag_rel_pos(rotations_ligand.size(), vector<Point3d<int> >(frag_sz));
 
-    vector<EnergyGrid> scores(rotations_ligand.size(), EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
-    // vector<EnergyGrid> scores(rotations_ligand.size(), EnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, 0.0));
+    vector<InterEnergyGrid> scores(rotations_ligand.size(), InterEnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, mol.getIntraEnergy()));
+    // vector<InterEnergyGrid> scores(rotations_ligand.size(), InterEnergyGrid(atom_grids[0].getCenter(), search_pitch, search_num, 0.0));
 
     for (int rotid = 0; rotid < rotations_ligand.size(); ++rotid) {
       FragmentsVector fv = fragvecs[lig_ind];
@@ -439,10 +439,10 @@ int main(int argc, char **argv){
     for (int j = 0; j < frag_sz; ++j) {
       int fragid = fragvecs[lig_ind].getvec(j).frag_idx;
       if (!frag_grid_container.isRegistered(fragid))
-        frag_grid_container.insert(FragmentEnergyGrid(frag_library[fragid], makeRotations60(), atom_grids, distance_grid));
+        frag_grid_container.insert(FragmentInterEnergyGrid(frag_library[fragid], makeRotations60(), atom_grids, distance_grid));
       else
         reduces += frag_library[fragid].size();
-      const FragmentEnergyGrid& fg = frag_grid_container.get(fragid);
+      const FragmentInterEnergyGrid& fg = frag_grid_container.get(fragid);
       frag_grid_container.next();
 
       #pragma omp parallel for // Calculation among rotation is independent
@@ -452,7 +452,7 @@ int main(int argc, char **argv){
         for (int x = 0, gx = gs.x; x < search_num.x; ++x, gx += ratio.x)
         for (int y = 0, gy = gs.y; y < search_num.y; ++y, gy += ratio.y)
         for (int z = 0, gz = gs.z; z < search_num.z; ++z, gz += ratio.z)
-          scores[rotid].addEnergy(x, y, z, fg.getGrid().getEnergy(gx + frag_rel_pos[rotid][j].x, gy + frag_rel_pos[rotid][j].y, gz + frag_rel_pos[rotid][j].z));
+          scores[rotid].addEnergy(x, y, z, fg.getGrid().getInterEnergy(gx + frag_rel_pos[rotid][j].x, gy + frag_rel_pos[rotid][j].y, gz + frag_rel_pos[rotid][j].z));
           // TODO: can be expressed as lig_grid += fg.getGrid() ??
       }
 
@@ -468,7 +468,7 @@ int main(int argc, char **argv){
       for (int x = 0; x < search_num.x; ++x) {
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
-            const fltype score = scores[rotid].getEnergy(x, y, z);
+            const fltype score = scores[rotid].getInterEnergy(x, y, z);
             if (score < OUTPUT_SCORE_THRESHOLD) {
               pos_param_vec[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
               // q[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
@@ -501,7 +501,7 @@ int main(int argc, char **argv){
   // calc = EnergyCalculator(0.95, 0.0);
 
   // Optimizer opt(receptor_mol);
-  // vector<AtomEnergyGrid> opt_atom_grids = AtomEnergyGrid::makeAtomGrids(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol, calc);
+  // vector<AtomInterEnergyGrid> opt_atom_grids = AtomInterEnergyGrid::makeAtomGrids(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol, calc);
   Optimizer_Grid opt_grid(atom_grids);
 
   logs::lout << logs::info << "end pre-calculate energy" << endl;
@@ -512,7 +512,7 @@ int main(int argc, char **argv){
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
 
-  for (const auto& p : lig_map) {
+  for (const auto& p : lig_map) { // for each ligand
     const string& identifier = p.first;
     int i = p.second;
     const vector<pos_param>& poss = pos_param_vec[i].getValues();
@@ -523,17 +523,19 @@ int main(int argc, char **argv){
       Molecule mol = ligands_mol[param.inp_ind];
       mol.rotate(rotations_ligand[param.rotid]);
       mol.translate(pos);
-      fltype opt_score = opt_grid.optimize(mol);
-      // fltype opt_score = param.score;
+      fltype opt_total_energy = opt_grid.optimize(mol);
+      // fltype opt_total_energy = param.score;
 
-      out_mols[j] = make_pair(opt_score, make_pair(param.inp_ind, mol));
+      out_mols[j] = make_pair(opt_total_energy, make_pair(param.inp_ind, mol));
     }
     sort(out_mols.begin(), out_mols.end());
     fltype best_intra = LIMIT_ENERGY;
+    fltype best_inter = LIMIT_ENERGY;
     fltype best_score = LIMIT_ENERGY;
     if (out_mols.size() > 0) {
       best_intra = ligands_mol[out_mols[0].second.first].getIntraEnergy();
-      best_score = out_mols[0].first / (1 + 0.05846 * ligands_mol[out_mols[0].second.first].getNrots());
+      best_inter = out_mols[0].first - best_intra;
+      best_score = best_inter / (1 + 0.05846 * ligands_mol[out_mols[0].second.first].getNrots());
     }
     ranking.push_back(make_pair(best_score, identifier));
 
@@ -545,7 +547,8 @@ int main(int argc, char **argv){
     // select output poses from out_mols with reference to config.pose_rmsd
     for (int cand = 0; cand < out_mols.size() && out_pose_mols.size() < config.poses_per_lig; ++cand) {
       int lig_ind = out_mols[cand].second.first;
-      fltype score = (out_mols[cand].first + ligands_mol[lig_ind].getIntraEnergy() - best_intra) / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
+      fltype inter_energy = (out_mols[cand].first - best_intra);
+      fltype score = inter_energy / (1 + 0.05846 * ligands_mol[lig_ind].getNrots());
       // score[j] = (out_mols[j].first) / (1 + 0.05846 * ligands_mol[lig_ind[j]].getNrots());
 
       OpenBabel::OBMol mol = ligands[lig_ind];

@@ -1,10 +1,10 @@
-#include "FragmentEnergyGrid.hpp"
+#include "FragmentInterEnergyGrid.hpp"
 
 namespace fragdock {
-  FragmentEnergyGrid::FragmentEnergyGrid(const Fragment& orig_frag,
+  FragmentInterEnergyGrid::FragmentInterEnergyGrid(const Fragment& orig_frag,
                                          const std::vector<Vector3d>& rot_angles,
-                                         const std::vector<AtomEnergyGrid>& atom_grids,
-                                         const EnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
+                                         const std::vector<AtomInterEnergyGrid>& atom_grids,
+                                         const InterEnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
     using namespace std;
     if(atom_grids.empty()) {
       cerr << "atom_grids is empty" << endl;
@@ -12,7 +12,7 @@ namespace fragdock {
     }
     assert(orig_frag.getCenter().abs() < EPS);
     const Point3d<int>& num = atom_grids[0].getNum();
-    grid = EnergyGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), num, LIMIT_ENERGY);
+    grid = InterEnergyGrid(atom_grids[0].getCenter(), atom_grids[0].getPitch(), num, LIMIT_ENERGY);
     int rotsz = rot_angles.size();
     if (orig_frag.size() <= 1) rotsz = 1;
 
@@ -28,7 +28,7 @@ namespace fragdock {
             if (rot_id & 7) {
               fltype collision = 2;
               fltype far = 6;
-              fltype dist = distance_grid.getEnergy(x, y, z);
+              fltype dist = distance_grid.getInterEnergy(x, y, z);
               if (dist < collision) {
                 // collision
                 continue;
@@ -43,9 +43,9 @@ namespace fragdock {
             for (const Atom& atom : atoms) {
               if (atom.getXSType() == XS_TYPE_H) continue;
 
-              const AtomEnergyGrid& agrid = atom_grids[atom.getXSType()];
+              const AtomInterEnergyGrid& agrid = atom_grids[atom.getXSType()];
               // atom += agrid.convert(x, y, z);
-              fltype diff = agrid.getEnergy(atom + agrid.convert(x, y, z));
+              fltype diff = agrid.getInterEnergy(atom + agrid.convert(x, y, z));
               // atom -= agrid.convert(x, y, z);
 
               sum += diff;
@@ -53,19 +53,19 @@ namespace fragdock {
                 break;
               }
             }
-            if (sum < grid.getEnergy(x, y, z)) {
-              grid.setEnergy(x, y, z, sum);
+            if (sum < grid.getInterEnergy(x, y, z)) {
+              grid.setInterEnergy(x, y, z, sum);
             }
           }
         }
       }
     }
   }
-  // void FragmentEnergyGrid::parse(const std::string& filename, int rot_size) {
+  // void FragmentInterEnergyGrid::parse(const std::string& filename, int rot_size) {
   //   using namespace std;
   //   ifstream ifs(filename.c_str(), std::ios::binary);
   //   if(!ifs) {
-  //     cerr << "FragmentEnergyGrid::parse() : file could not open. " << filename << endl;
+  //     cerr << "FragmentInterEnergyGrid::parse() : file could not open. " << filename << endl;
   //     return;
   //   }
   //   grids.resize(rot_size);
@@ -74,11 +74,11 @@ namespace fragdock {
 
   //   ifs.close();
   // }
-  // void FragmentEnergyGrid::writeFile(const std::string& filename) const {
+  // void FragmentInterEnergyGrid::writeFile(const std::string& filename) const {
   //   using namespace std;
   //   ofstream ofs(filename.c_str(), std::ios::binary);
   //   if(!ofs){
-  //     cerr << "EnergyGrid::WriteFile() : file could not open. " << filename << endl;
+  //     cerr << "InterEnergyGrid::WriteFile() : file could not open. " << filename << endl;
   //     return ;
   //   }
   //   for(int i = 0; i < grids.size(); i++)

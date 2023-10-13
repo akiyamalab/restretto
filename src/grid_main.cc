@@ -3,7 +3,7 @@
 #include "infile_reader.hpp"
 #include "utils.hpp"
 
-#include "AtomEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
 #include "EnergyCalculator.hpp"
 #include "log_writer_stream.hpp"
 
@@ -67,7 +67,7 @@ namespace {
     }
   }
 
-  void makeEnergyGrid(fragdock::AtomEnergyGrid& energy_grid, const fragdock::Molecule& receptor_mol, const fragdock::EnergyCalculator& calc){
+  void makeEnergyGrid(fragdock::AtomInterEnergyGrid& energy_grid, const fragdock::Molecule& receptor_mol, const fragdock::EnergyCalculator& calc){
     const fragdock::Vector3d temp(0,0,0);
     fragdock::Atom atom(0, temp, energy_grid.getXSType());
 
@@ -76,7 +76,7 @@ namespace {
       for(int y=0; y<energy_grid.getNum().y; y++) {
         for(int z=0; z<energy_grid.getNum().z; z++) {
           atom.setPos(energy_grid.convert(x, y, z));
-          energy_grid.setEnergy(x, y, z, calc.getEnergy(atom, receptor_mol));
+          energy_grid.setInterEnergy(x, y, z, calc.getEnergy(atom, receptor_mol));
         }
       }
     }
@@ -116,8 +116,8 @@ int main(int argc, char **argv){
     const fragdock::Point3d<fltype>& pitch = grid.score_pitch;
     const fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / pitch) * 2 + 1;
 
-    logs::lout << logs::debug << "Initialize fragdock::AtomEnergyGrid. " << xs_strings[xs_type] << std::endl;
-    fragdock::AtomEnergyGrid energy_grid(center, pitch, num, xs_type);
+    logs::lout << logs::debug << "Initialize fragdock::AtomInterEnergyGrid. " << xs_strings[xs_type] << std::endl;
+    fragdock::AtomInterEnergyGrid energy_grid(center, pitch, num, xs_type);
     logs::lout << logs::debug << "Start calculation of each point. " << xs_strings[xs_type] << std::endl;
     makeEnergyGrid(energy_grid, receptor_mol, calc);
 
