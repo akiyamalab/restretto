@@ -3,7 +3,7 @@
 #include "OBMol.hpp"
 #include "infile_reader.hpp"
 #include "log_writer_stream.hpp"
-#include "AtomEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
 #include "EnergyCalculator.hpp"
 #include "Optimizer.hpp"
 
@@ -108,7 +108,7 @@ namespace {
     return score_num / 2 + (k - search_num / 2) * ratio;
   }
 
-  fltype calcInterEnergy(const fragdock::Molecule& mol, const std::vector<fragdock::AtomEnergyGrid>& atom_grids) {
+  fltype calcInterEnergy(const fragdock::Molecule& mol, const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) {
     fltype ret = 0.0;
     for (auto& a : mol.getAtoms()) {
       ret += atom_grids[a.getXSType()].getEnergy(a);
@@ -141,7 +141,7 @@ int main(int argc, char **argv){
   // prepare atomgrids and rotations
   // ================================================================
   logs::lout << logs::info << "[start] read energy grids" << endl;
-  vector<AtomEnergyGrid> atom_grids = AtomEnergyGrid::readAtomGrids(config.grid_folder);
+  vector<AtomInterEnergyGrid> atom_grids = AtomInterEnergyGrid::readAtomGrids(config.grid_folder);
   logs::lout << logs::info << "[ end ] read energy grids" << endl;
   // logs::lout << "atom grid size: " << atom_grids.size() << endl;
 

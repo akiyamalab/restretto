@@ -9,18 +9,18 @@ namespace fragdock {
   /**
    * An energy grid for a single atom type.
   */
-  class AtomEnergyGrid : public InterEnergyGrid {
+  class AtomInterEnergyGrid : public InterEnergyGrid {
     int xs_type;
   public:
-    AtomEnergyGrid() {}
-    AtomEnergyGrid(const std::string &filename, int xs_type)
+    AtomInterEnergyGrid() {}
+    AtomInterEnergyGrid(const std::string &filename, int xs_type)
       : xs_type(xs_type) { parse(filename); }
-    AtomEnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num, int xs_type)
+    AtomInterEnergyGrid(const Point3d<fltype>& center, const Point3d<fltype>& pitch, const Point3d<int>& num, int xs_type)
       : InterEnergyGrid(center, pitch, num), xs_type(xs_type) {}
-    ~AtomEnergyGrid() {}
+    ~AtomInterEnergyGrid() {}
     int getXSType() const { return xs_type; }
-    static std::vector<AtomEnergyGrid> readAtomGrids(const std::string& grid_folder);
-    static std::vector<AtomEnergyGrid> makeAtomGrids(const Point3d<fltype>& center,
+    static std::vector<AtomInterEnergyGrid> readAtomGrids(const std::string& grid_folder);
+    static std::vector<AtomInterEnergyGrid> makeAtomGrids(const Point3d<fltype>& center,
                                                      const Point3d<fltype>& pitch,
                                                      const Point3d<int>& num,
                                                      const Molecule& receptor_mol,

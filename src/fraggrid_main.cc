@@ -5,14 +5,14 @@
 #include "MoleculeToFragments.hpp"
 #include "infile_reader.hpp"
 #include "log_writer_stream.hpp"
-#include "AtomEnergyGrid.hpp"
-#include "FragmentEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
+#include "FragmentInterEnergyGrid.hpp"
 #include "FragmentsVector.hpp"
 #include "EnergyCalculator.hpp"
 #include "CalcMCFP.hpp"
 #include "Optimizer.hpp"
 #include "MinValuesVector.hpp"
-#include "FragmentEnergyGridContainer.hpp"
+#include "FragmentInterEnergyGridContainer.hpp"
 #include "RMSD.hpp"
 
 #include <iostream>
@@ -227,7 +227,7 @@ int main(int argc, char **argv){
   // prepare atomgrids and rotations
   // ================================================================
   logs::lout << logs::info << "[start] read energy grids" << endl;
-  vector<AtomEnergyGrid> atom_grids = AtomEnergyGrid::readAtomGrids(config.grid_folder);
+  vector<AtomInterEnergyGrid> atom_grids = AtomInterEnergyGrid::readAtomGrids(config.grid_folder);
   logs::lout << logs::info << "[ end ] read energy grids" << endl;
   // logs::lout << "atom grid size: " << atom_grids.size() << endl;
 
@@ -402,13 +402,13 @@ int main(int argc, char **argv){
   }
 
   typedef format::DockingConfiguration::ReuseStrategy Strategy;
-  FragmentEnergyGridContainer frag_grid_container;
+  FragmentInterEnergyGridContainer frag_grid_container;
   if (config.reuse_grid == Strategy::ONLINE)
-    frag_grid_container = FragmentEnergyGridContainer(FGRID_SIZE);
+    frag_grid_container = FragmentInterEnergyGridContainer(FGRID_SIZE);
   else if (config.reuse_grid == Strategy::OFFLINE) 
-    frag_grid_container = FragmentEnergyGridContainer(FGRID_SIZE, nextgridsp);
+    frag_grid_container = FragmentInterEnergyGridContainer(FGRID_SIZE, nextgridsp);
   else // config.reuse_grid == Strategy::NONE
-    frag_grid_container = FragmentEnergyGridContainer(1);
+    frag_grid_container = FragmentInterEnergyGridContainer(1);
 
   for (int i = 0; i < ligs_sz; ++i) {
     int lig_ind = sorted_lig[i];
@@ -439,10 +439,10 @@ int main(int argc, char **argv){
     for (int j = 0; j < frag_sz; ++j) {
       int fragid = fragvecs[lig_ind].getvec(j).frag_idx;
       if (!frag_grid_container.isRegistered(fragid))
-        frag_grid_container.insert(FragmentEnergyGrid(frag_library[fragid], makeRotations60(), atom_grids, distance_grid));
+        frag_grid_container.insert(FragmentInterEnergyGrid(frag_library[fragid], makeRotations60(), atom_grids, distance_grid));
       else
         reduces += frag_library[fragid].size();
-      const FragmentEnergyGrid& fg = frag_grid_container.get(fragid);
+      const FragmentInterEnergyGrid& fg = frag_grid_container.get(fragid);
       frag_grid_container.next();
 
       #pragma omp parallel for // Calculation among rotation is independent
@@ -501,7 +501,7 @@ int main(int argc, char **argv){
   // calc = EnergyCalculator(0.95, 0.0);
 
   // Optimizer opt(receptor_mol);
-  // vector<AtomEnergyGrid> opt_atom_grids = AtomEnergyGrid::makeAtomGrids(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol, calc);
+  // vector<AtomInterEnergyGrid> opt_atom_grids = AtomInterEnergyGrid::makeAtomGrids(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol, calc);
   Optimizer_Grid opt_grid(atom_grids);
 
   logs::lout << logs::info << "end pre-calculate energy" << endl;

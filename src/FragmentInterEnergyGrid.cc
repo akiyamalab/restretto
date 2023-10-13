@@ -1,9 +1,9 @@
-#include "FragmentEnergyGrid.hpp"
+#include "FragmentInterEnergyGrid.hpp"
 
 namespace fragdock {
-  FragmentEnergyGrid::FragmentEnergyGrid(const Fragment& orig_frag,
+  FragmentInterEnergyGrid::FragmentInterEnergyGrid(const Fragment& orig_frag,
                                          const std::vector<Vector3d>& rot_angles,
-                                         const std::vector<AtomEnergyGrid>& atom_grids,
+                                         const std::vector<AtomInterEnergyGrid>& atom_grids,
                                          const InterEnergyGrid& distance_grid) : frag_idx(orig_frag.getIdx()) {
     using namespace std;
     if(atom_grids.empty()) {
@@ -43,7 +43,7 @@ namespace fragdock {
             for (const Atom& atom : atoms) {
               if (atom.getXSType() == XS_TYPE_H) continue;
 
-              const AtomEnergyGrid& agrid = atom_grids[atom.getXSType()];
+              const AtomInterEnergyGrid& agrid = atom_grids[atom.getXSType()];
               // atom += agrid.convert(x, y, z);
               fltype diff = agrid.getEnergy(atom + agrid.convert(x, y, z));
               // atom -= agrid.convert(x, y, z);
@@ -61,11 +61,11 @@ namespace fragdock {
       }
     }
   }
-  // void FragmentEnergyGrid::parse(const std::string& filename, int rot_size) {
+  // void FragmentInterEnergyGrid::parse(const std::string& filename, int rot_size) {
   //   using namespace std;
   //   ifstream ifs(filename.c_str(), std::ios::binary);
   //   if(!ifs) {
-  //     cerr << "FragmentEnergyGrid::parse() : file could not open. " << filename << endl;
+  //     cerr << "FragmentInterEnergyGrid::parse() : file could not open. " << filename << endl;
   //     return;
   //   }
   //   grids.resize(rot_size);
@@ -74,7 +74,7 @@ namespace fragdock {
 
   //   ifs.close();
   // }
-  // void FragmentEnergyGrid::writeFile(const std::string& filename) const {
+  // void FragmentInterEnergyGrid::writeFile(const std::string& filename) const {
   //   using namespace std;
   //   ofstream ofs(filename.c_str(), std::ios::binary);
   //   if(!ofs){

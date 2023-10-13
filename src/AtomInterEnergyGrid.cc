@@ -1,25 +1,25 @@
-#include "AtomEnergyGrid.hpp"
+#include "AtomInterEnergyGrid.hpp"
 
 namespace fragdock {
-  std::vector<AtomEnergyGrid> AtomEnergyGrid::readAtomGrids(const std::string& grid_folder){
-    std::vector<AtomEnergyGrid> inter_energy_grids(XS_TYPE_SIZE);
+  std::vector<AtomInterEnergyGrid> AtomInterEnergyGrid::readAtomGrids(const std::string& grid_folder){
+    std::vector<AtomInterEnergyGrid> inter_energy_grids(XS_TYPE_SIZE);
 
     for(int i = 0; i < XS_TYPE_SIZE; i++){
       std::string grid_filename = grid_folder + "/" + xs_strings[i] + ".grid";
-      inter_energy_grids[i] = AtomEnergyGrid(grid_filename, i);
+      inter_energy_grids[i] = AtomInterEnergyGrid(grid_filename, i);
     }
     return inter_energy_grids;
   }
-  std::vector<AtomEnergyGrid> AtomEnergyGrid::makeAtomGrids(const Point3d<fltype>& center,
+  std::vector<AtomInterEnergyGrid> AtomInterEnergyGrid::makeAtomGrids(const Point3d<fltype>& center,
                                                             const Point3d<fltype>& pitch,
                                                             const Point3d<int>& num,
                                                             const Molecule& receptor_mol,
                                                             const EnergyCalculator& ec) {
 
-    std::vector<AtomEnergyGrid> inter_energy_grids(XS_TYPE_SIZE);
+    std::vector<AtomInterEnergyGrid> inter_energy_grids(XS_TYPE_SIZE);
 
     for(int i = 0; i < XS_TYPE_SIZE; i++) {
-      inter_energy_grids[i] = AtomEnergyGrid(center, pitch, num, i);
+      inter_energy_grids[i] = AtomInterEnergyGrid(center, pitch, num, i);
       const Vector3d temp(0,0,0);
       Atom atom(0, temp, i);
 

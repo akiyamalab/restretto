@@ -1,6 +1,6 @@
 #include "common.hpp"
 #include "infile_reader.hpp"
-#include "FragmentEnergyGrid.hpp"
+#include "FragmentInterEnergyGrid.hpp"
 
 
 #ifndef _FRAGMENT_ENERGY_GRID_CONTAINER_H_
@@ -9,10 +9,10 @@
 typedef format::DockingConfiguration::ReuseStrategy Strategy;
 
 namespace fragdock {
-  class FragmentEnergyGridContainer {
+  class FragmentInterEnergyGridContainer {
   private:
     int size;
-    std::vector<FragmentEnergyGrid> grids;
+    std::vector<FragmentInterEnergyGrid> grids;
     Strategy strategy;
     std::vector<int> indices_to_save; // only for OFFLINE strategy
     int step = 0;
@@ -43,18 +43,18 @@ namespace fragdock {
       return lru_idx;
     }
   public:
-    FragmentEnergyGridContainer() : size(0) {}
-    FragmentEnergyGridContainer(const int size) : size(size) {
-      grids = std::vector<FragmentEnergyGrid>(size);
+    FragmentInterEnergyGridContainer() : size(0) {}
+    FragmentInterEnergyGridContainer(const int size) : size(size) {
+      grids = std::vector<FragmentInterEnergyGrid>(size);
       strategy = Strategy::ONLINE;
       last_used = std::vector<int>(size, -1);
     }
-    FragmentEnergyGridContainer(const int size, const std::vector<int> &indices_to_save) : size(size), indices_to_save(indices_to_save) {
-      grids = std::vector<FragmentEnergyGrid>(size);
+    FragmentInterEnergyGridContainer(const int size, const std::vector<int> &indices_to_save) : size(size), indices_to_save(indices_to_save) {
+      grids = std::vector<FragmentInterEnergyGrid>(size);
       strategy = Strategy::OFFLINE;
       checkValidity();
     }
-    FragmentEnergyGridContainer& operator=(const FragmentEnergyGridContainer& other) {
+    FragmentInterEnergyGridContainer& operator=(const FragmentInterEnergyGridContainer& other) {
       if (this != &other) {
         size = other.size;
         grids = other.grids;
@@ -65,8 +65,8 @@ namespace fragdock {
       }
       return *this;
     }
-    ~FragmentEnergyGridContainer() {}
-    void insert(const FragmentEnergyGrid& grid) {
+    ~FragmentInterEnergyGridContainer() {}
+    void insert(const FragmentInterEnergyGrid& grid) {
       if (strategy == Strategy::ONLINE) {
         int lru_idx = find_lru_idx();
         grids[lru_idx] = grid;
@@ -82,10 +82,10 @@ namespace fragdock {
         return grids[indices_to_save[step]].frag_idx == fragid;
       } 
     }
-    const FragmentEnergyGrid& get(const int fragid) {
+    const FragmentInterEnergyGrid& get(const int fragid) {
       if (! isRegistered(fragid)) {
-        logs::lout << logs::error << "FragmentEnergyGridContainer: FragmentEnergyGrid not found: " << fragid << std::endl;
-        throw std::runtime_error("FragmentEnergyGridContainer: FragmentEnergyGrid not found");
+        logs::lout << logs::error << "FragmentInterEnergyGridContainer: FragmentInterEnergyGrid not found: " << fragid << std::endl;
+        throw std::runtime_error("FragmentInterEnergyGridContainer: FragmentInterEnergyGrid not found");
       }
 
       if (strategy == Strategy::ONLINE) {
