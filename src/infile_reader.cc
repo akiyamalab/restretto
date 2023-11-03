@@ -11,7 +11,7 @@ namespace format {
   DockingConfiguration ParseInFile(const char *filename){
     std::ifstream ifs(filename);
     if (ifs.fail()){
-      std::cerr << "opening grid file failed:" << filename << std::endl;
+      std::cerr << "opening config file failed: " << filename << std::endl;
       abort();
     }
     DockingConfiguration conf;
