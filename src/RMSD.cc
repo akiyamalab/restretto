@@ -75,32 +75,32 @@ namespace OpenBabel{
   }
 
   fltype calc_minRMSD(const OpenBabel::OBMol& mol, const std::vector<OpenBabel::OBMol>& ref_mols) {
-    OpenBabel::OBMol& cast_mol = const_cast<OpenBabel::OBMol&>(mol);
+    OpenBabel::OBMol m = mol; // copying object to avoid modifying the original
 
     //preprocess molecule into a standardized state for heavy atom rmsd computation
     /* isomorphismmapper wants isomorphic atoms to have the same aromatic and ring state,
      * but these proporties aren't reliable enough to be trusted in evaluating molecules
      * should be considered the same based solely on connectivity
     */
-    cast_mol.DeleteHydrogens(); //heavy atom rmsd
-    for(OpenBabel::OBAtomIterator aitr = cast_mol.BeginAtoms(); aitr != cast_mol.EndAtoms(); aitr++) {
+    m.DeleteHydrogens(); //heavy atom rmsd
+    for(OpenBabel::OBAtomIterator aitr = m.BeginAtoms(); aitr != m.EndAtoms(); aitr++) {
       OpenBabel::OBAtom *a = *aitr;
       a->UnsetAromatic();
       a->SetInRing();
     }
-    for(OpenBabel::OBBondIterator bitr = cast_mol.BeginBonds(); bitr != cast_mol.EndBonds(); bitr++) {
+    for(OpenBabel::OBBondIterator bitr = m.BeginBonds(); bitr != m.EndBonds(); bitr++) {
       OpenBabel::OBBond *b = *bitr;
       b->UnsetAromatic();
       b->SetBondOrder(1);
       b->SetInRing();
     }
     //avoid recomputations
-    cast_mol.SetHybridizationPerceived();
-    cast_mol.SetRingAtomsAndBondsPerceived();
-    cast_mol.SetAromaticPerceived();
+    m.SetHybridizationPerceived();
+    m.SetRingAtomsAndBondsPerceived();
+    m.SetAromaticPerceived();
 
     // calculate minimum RMSD between mol and ref_mols
-    OpenBabel::Matcher matcher(cast_mol);
+    OpenBabel::Matcher matcher(m);
     fltype minRMSD = HUGE_VAL;
     for (OpenBabel::OBMol ref_mol : ref_mols) { 
       minRMSD = std::min(minRMSD, static_cast<fltype>(matcher.computeRMSD(ref_mol)));
