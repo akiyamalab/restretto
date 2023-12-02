@@ -2,4 +2,14 @@
     "runArgs": [],
     "name": "restretto",
     "dockerFile": "Dockerfile",
+    "extensions": [
+        "github.copilot",
+        "mhutchie.git-graph",
+        "shd101wyy.markdown-preview-enhanced",
+        "ms-vscode.cpptools-extension-pack",
+    ],
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_host,type=bind",
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig,type=bind",
+    ],
 }
