@@ -113,6 +113,7 @@ namespace format{
         del_id_list.erase(std::remove(del_id_list.begin(), del_id_list.end(), id), del_id_list.end());
 
       if (mol.getAtoms()[i].getXSType() == XS_TYPE_DUMMY) {
+        obmol.GetAtom(id + 1)->SetFormalCharge(0);
         obmol.GetAtom(id + 1)->SetAtomicNum(0);
       }
       else if (mol.getAtoms()[i].getXSType() != XS_TYPE_H) {
