@@ -138,6 +138,12 @@ namespace format {
         boost::algorithm::trim(str);
         conf.pose_rmsd = boost::lexical_cast<fltype>(str);
       }
+      else if (boost::algorithm::starts_with(buffer, "NO_LOCAL_OPT ")) {
+        std::string str = buffer.substr(13);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        conf.no_local_opt = (str != "false");
+      }
     }
 
     return conf;
