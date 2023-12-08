@@ -66,6 +66,8 @@ namespace OpenBabel {
     }
   };
 	
+  // preprocess molecule into a standardized state for heavy atom rmsd computation
+  OpenBabel::OBMol standardize_mol(const OpenBabel::OBMol& mol);
   // calculate minimum RMSD between mol and ref_mols
   fltype calc_minRMSD(const OpenBabel::OBMol& mol, const std::vector<OpenBabel::OBMol>& ref_mols);
 }

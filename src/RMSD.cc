@@ -74,10 +74,9 @@ namespace OpenBabel{
     return false;
   }
 
-  fltype calc_minRMSD(const OpenBabel::OBMol& mol, const std::vector<OpenBabel::OBMol>& ref_mols) {
+  OpenBabel::OBMol standardize_mol(const OpenBabel::OBMol& mol) {
     OpenBabel::OBMol m = mol; // copying object to avoid modifying the original
 
-    //preprocess molecule into a standardized state for heavy atom rmsd computation
     /* isomorphismmapper wants isomorphic atoms to have the same aromatic and ring state,
      * but these proporties aren't reliable enough to be trusted in evaluating molecules
      * should be considered the same based solely on connectivity
@@ -99,11 +98,24 @@ namespace OpenBabel{
     m.SetRingAtomsAndBondsPerceived();
     m.SetAromaticPerceived();
 
+    return m;
+  }
+
+  fltype calc_minRMSD(const OpenBabel::OBMol& mol, const std::vector<OpenBabel::OBMol>& ref_mols) {
+
+    OpenBabel::OBMol m = standardize_mol(mol);
+    std::vector<OpenBabel::OBMol> cf_mols = ref_mols;
+    for (OpenBabel::OBMol& cf_mol : cf_mols) {
+      cf_mol = standardize_mol(cf_mol);
+    }
+
     // calculate minimum RMSD between mol and ref_mols
     OpenBabel::Matcher matcher(m);
     fltype minRMSD = HUGE_VAL;
-    for (OpenBabel::OBMol ref_mol : ref_mols) { 
-      minRMSD = std::min(minRMSD, static_cast<fltype>(matcher.computeRMSD(ref_mol)));
+    for (OpenBabel::OBMol cf_mol : cf_mols) { 
+      fltype rmsd = matcher.computeRMSD(cf_mol);
+      logs::lout << "RMSD: " << rmsd << std::endl;
+      minRMSD = std::min(minRMSD, rmsd);
     }
     return minRMSD;
   }
