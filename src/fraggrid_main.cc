@@ -513,7 +513,7 @@ int main(int argc, char **argv){
   
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
-  logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt?"true":"false") << endl;
+  logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
 
   for (const auto& p : lig_map) { // for each ligand
     const string& identifier = p.first;
