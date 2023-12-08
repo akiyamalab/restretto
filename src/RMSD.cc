@@ -114,7 +114,6 @@ namespace OpenBabel{
     fltype minRMSD = HUGE_VAL;
     for (OpenBabel::OBMol cf_mol : cf_mols) { 
       fltype rmsd = matcher.computeRMSD(cf_mol);
-      logs::lout << "RMSD: " << rmsd << std::endl;
       minRMSD = std::min(minRMSD, rmsd);
     }
     return minRMSD;
