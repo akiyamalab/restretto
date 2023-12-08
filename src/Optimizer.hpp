@@ -24,6 +24,7 @@ namespace fragdock {
     }
   public:
     explicit Optimizer_Grid(const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) : atom_grids(atom_grids) {}
+    fltype calcTotalEnergy(const Molecule &mol) const {return calcInterEnergy(mol) + mol.getIntraEnergy();}
     fltype optimize(Molecule &mol) const;
   };
 }
