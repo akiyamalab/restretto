@@ -44,6 +44,7 @@ namespace {
       ("receptor,r", value<std::string>(), "receptor file (.pdb file)")
       ("grid,g", value<std::string>(), "grid folder")
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
+      ("no-local-opt", "skip local optimization process")
       ("log", value<std::string>(), "log file")
       ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand");
     options_description desc;
@@ -70,6 +71,7 @@ namespace {
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
     if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
+    if (vmap.count("no-local-opt")) conf.no_local_opt = true;
     conf.checkConfigValidity();
     return conf;
   }
@@ -511,6 +513,7 @@ int main(int argc, char **argv){
   
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
+  logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
 
   for (const auto& p : lig_map) { // for each ligand
     const string& identifier = p.first;
@@ -523,10 +526,12 @@ int main(int argc, char **argv){
       Molecule mol = ligands_mol[param.inp_ind];
       mol.rotate(rotations_ligand[param.rotid]);
       mol.translate(pos);
-      fltype opt_total_energy = opt_grid.optimize(mol);
-      // fltype opt_total_energy = param.score;
+      fltype total_energy = opt_grid.calcTotalEnergy(mol);
+      if (!config.no_local_opt) {
+        total_energy = opt_grid.optimize(mol);
+      } 
 
-      out_mols[j] = make_pair(opt_total_energy, make_pair(param.inp_ind, mol));
+      out_mols[j] = make_pair(total_energy, make_pair(param.inp_ind, mol));
     }
     sort(out_mols.begin(), out_mols.end());
     fltype best_intra = LIMIT_ENERGY;

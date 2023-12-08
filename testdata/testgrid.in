@@ -9,3 +9,4 @@ LIGAND testdata/G39.mol2
 LIGAND testdata/conformers.mol2
 OUTPUT testdata/G39_docked.sdf
 GRID_FOLDER testdata/grid
+NO_LOCAL_OPT false

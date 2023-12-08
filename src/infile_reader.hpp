@@ -24,6 +24,7 @@ namespace format {
     int64_t mem_size;
     int64_t poses_per_lig = 1;
     fltype pose_rmsd = 0.5;
+    bool no_local_opt = false;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case ReuseStrategy::OFFLINE: return "REUSE_OFFLINE";
