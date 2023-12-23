@@ -46,7 +46,8 @@ namespace {
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
       ("no-local-opt", "skip local optimization process")
       ("log", value<std::string>(), "log file")
-      ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand");
+      ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
+      ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -390,7 +391,7 @@ int main(int argc, char **argv){
   std::chrono::milliseconds real_time(0);
 
   // storing best poses for each ligand
-  vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(NUM_POSES_PER_LIGAND_BEFORE_OPT));
+  vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(config.poses_per_lig_before_opt));
 
 
   logs::lout << logs::info << "[TIME STAMP] START CALCULATING BY FRAGGRID" << endl;
