@@ -47,7 +47,8 @@ namespace {
       ("no-local-opt", "skip local optimization process")
       ("log", value<std::string>(), "log file")
       ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
-      ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand");
+      ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand")
+      ("output-score-threshold", value<fltype>(), "output score threshold");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -472,7 +473,7 @@ int main(int argc, char **argv){
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
             const fltype score = scores[rotid].getInterEnergy(x, y, z);
-            if (score < OUTPUT_SCORE_THRESHOLD) {
+            if (score < config.output_score_threshold) {
               pos_param_vec[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
               // q[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
               // if (q[ind].size() > top_before_strictopt)

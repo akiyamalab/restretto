@@ -138,6 +138,11 @@ namespace format {
         boost::algorithm::trim(str);
         conf.poses_per_lig_before_opt = boost::lexical_cast<int64_t>(str);
       }
+      else if (boost::algorithm::starts_with(buffer, "OUTPUT_SCORE_THRESHOLD ")) {
+        std::string str = buffer.substr(23);
+        boost::algorithm::trim(str);
+        conf.output_score_threshold = boost::lexical_cast<fltype>(str);
+      }
       else if (boost::algorithm::starts_with(buffer, "POSE_RMSD ")) {
         std::string str = buffer.substr(10);
         boost::algorithm::trim(str);

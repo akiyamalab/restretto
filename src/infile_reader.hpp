@@ -24,6 +24,7 @@ namespace format {
     int64_t mem_size;
     int64_t poses_per_lig = 1;
     int64_t poses_per_lig_before_opt = 2000;
+    fltype output_score_threshold = -3.0;
     fltype pose_rmsd = 0.5;
     bool no_local_opt = false;
     const std::string getReuseGridString() {
