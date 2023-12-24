@@ -47,6 +47,7 @@ namespace {
       ("no-local-opt", "skip local optimization process")
       ("log", value<std::string>(), "log file")
       ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
+      ("rmsd", value<fltype>(), "rmsd threshold for output poses")
       ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand")
       ("output-score-threshold", value<fltype>(), "output score threshold");
     options_description desc;
@@ -74,6 +75,8 @@ namespace {
     if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     if (vmap.count("no-local-opt")) conf.no_local_opt = true;
+    if (vmap.count("poses-per-lig-before-opt")) conf.poses_per_lig_before_opt = vmap["poses-per-lig-before-opt"].as<int64_t>();
+    if (vmap.count("output-score-threshold")) conf.output_score_threshold = vmap["output-score-threshold"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
   }
