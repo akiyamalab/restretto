@@ -40,11 +40,11 @@ namespace {
 
     if (!vmap.count("conf-file") || vmap.count("help")){
       if (!vmap.count("conf-file") && !vmap.count("help")){
-	std::cout << "too few arguments" << std::endl;
+        std::cout << "too few arguments" << std::endl;
       }
-      std::cout << "Usage: ligangrid conf-file -o folderName [options]\n"
-		<< options << std::endl;
-      std::exit(0);
+      std::cout << "Usage: " << argv[0] << " conf-file [options]\n"
+        << options << std::endl;
+      std::exit((!vmap.count("help"))?1:0);
     }
 
     format::DockingConfiguration conf = format::ParseInFile(vmap["conf-file"].as<std::string>().c_str());

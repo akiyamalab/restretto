@@ -46,7 +46,10 @@ namespace {
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
       ("no-local-opt", "skip local optimization process")
       ("log", value<std::string>(), "log file")
-      ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand");
+      ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
+      ("rmsd", value<fltype>(), "rmsd threshold for output poses")
+      ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand")
+      ("output-score-threshold", value<fltype>(), "output score threshold");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -56,11 +59,11 @@ namespace {
 
     if (!vmap.count("conf-file") || vmap.count("help")){
       if (!vmap.count("conf-file") && !vmap.count("help")){
-	std::cout << "too few arguments" << std::endl;
+        std::cout << "too few arguments" << std::endl;
       }
-      std::cout << "Usage: ligandock conf-file [options]\n"
-		<< options << std::endl;
-      std::exit(0);
+      std::cout << "Usage: ligandock conf-file [options]\n" 
+        << options << std::endl;
+      std::exit((!vmap.count("help"))?1:0);
     }
     format::DockingConfiguration conf = format::ParseInFile(vmap["conf-file"].as<std::string>().c_str());
     if (vmap.count("ligand")) conf.ligand_files = vmap["ligand"].as<std::vector<std::string> >();
@@ -72,6 +75,8 @@ namespace {
     if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
     if (vmap.count("no-local-opt")) conf.no_local_opt = true;
+    if (vmap.count("poses-per-lig-before-opt")) conf.poses_per_lig_before_opt = vmap["poses-per-lig-before-opt"].as<int64_t>();
+    if (vmap.count("output-score-threshold")) conf.output_score_threshold = vmap["output-score-threshold"].as<fltype>();
     conf.checkConfigValidity();
     return conf;
   }
@@ -390,7 +395,7 @@ int main(int argc, char **argv){
   std::chrono::milliseconds real_time(0);
 
   // storing best poses for each ligand
-  vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(NUM_POSES_PER_LIGAND_BEFORE_OPT));
+  vector<utils::MinValuesVector<pos_param> > pos_param_vec(lig_map.size(), utils::MinValuesVector<pos_param>(config.poses_per_lig_before_opt));
 
 
   logs::lout << logs::info << "[TIME STAMP] START CALCULATING BY FRAGGRID" << endl;
@@ -471,7 +476,7 @@ int main(int argc, char **argv){
         for (int y = 0; y < search_num.y; ++y) {
           for (int z = 0; z < search_num.z; ++z) {
             const fltype score = scores[rotid].getInterEnergy(x, y, z);
-            if (score < OUTPUT_SCORE_THRESHOLD) {
+            if (score < config.output_score_threshold) {
               pos_param_vec[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
               // q[ind].push(pos_param(rotid, x, y, z, score, lig_ind));
               // if (q[ind].size() > top_before_strictopt)
@@ -511,6 +516,8 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
   
+  logs::lout << logs::debug << "config.output_score_threshold : " << config.output_score_threshold << endl;
+  logs::lout << logs::debug << "config.poses_per_lig_before_opt : " << config.poses_per_lig_before_opt << endl;
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
   logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
