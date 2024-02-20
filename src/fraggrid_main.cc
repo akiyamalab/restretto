@@ -59,11 +59,11 @@ namespace {
 
     if (!vmap.count("conf-file") || vmap.count("help")){
       if (!vmap.count("conf-file") && !vmap.count("help")){
-	std::cout << "too few arguments" << std::endl;
+        std::cout << "too few arguments" << std::endl;
       }
-      std::cout << "Usage: ligandock conf-file [options]\n"
-		<< options << std::endl;
-      std::exit(0);
+      std::cout << "Usage: ligandock conf-file [options]\n" 
+        << options << std::endl;
+      std::exit((!vmap.count("help"))?1:0);
     }
     format::DockingConfiguration conf = format::ParseInFile(vmap["conf-file"].as<std::string>().c_str());
     if (vmap.count("ligand")) conf.ligand_files = vmap["ligand"].as<std::vector<std::string> >();
@@ -516,6 +516,8 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
   
+  logs::lout << logs::debug << "config.output_score_threshold : " << config.output_score_threshold << endl;
+  logs::lout << logs::debug << "config.poses_per_lig_before_opt : " << config.poses_per_lig_before_opt << endl;
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
   logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
