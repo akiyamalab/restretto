@@ -19,12 +19,15 @@ namespace format {
     std::string receptor_file, output_file;
     std::string log_file, grid_folder;
     std::string rotangs_file;
+    std::string fragment_file;
     ReuseStrategy reuse_grid = ReuseStrategy::OFFLINE;
     bool reorder = true;
     int64_t mem_size;
     int64_t poses_per_lig = 1;
     fltype pose_rmsd = 0.5;
     bool no_local_opt = false;
+    int capping_atomic_num, max_ring_size;
+    bool do_carbon_capping, insert_fragment_id_to_isotope, merge_solitary;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case ReuseStrategy::OFFLINE: return "REUSE_OFFLINE";

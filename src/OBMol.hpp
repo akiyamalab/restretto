@@ -8,6 +8,7 @@
 #include <openbabel/graphsym.h>
 
 #include "Molecule.hpp"
+#include "utils.hpp"
 
 #ifndef OBMOL_H_
 #define OBMOL_H_
@@ -17,7 +18,11 @@ namespace format{
   std::vector<OpenBabel::OBMol> ParseFileToOBMol(const std::string& filepath);
   std::vector<OpenBabel::OBMol> ParseFileToOBMol(std::istream& stream, const std::string& in_format);
   fragdock::Molecule    toFragmentMol(const OpenBabel::OBMol& mol);
-  OpenBabel::OBMol      toOBMol(const fragdock::Molecule &mol, const OpenBabel::OBMol& original_obmol);
+  OpenBabel::OBMol      toOBMol(const fragdock::Molecule &mol, 
+                                const OpenBabel::OBMol& original_obmol, 
+                                int capping_atomic_num=-1, 
+                                bool capping_for_carbon=false,
+                                bool insert_fragment_id_to_isotope=true);
 }
 
 namespace OpenBabel{
@@ -28,7 +33,8 @@ namespace OpenBabel{
     outputOBMol(const std::string& filepath) {
       ofs.open(filepath);
       conv = OpenBabel::OBConversion(NULL, &ofs);
-      conv.SetOutFormat("sdf");
+      // conv.SetOutFormat("sdf");
+      conv.SetOutFormat(utils::GetExtension(filepath).c_str());
     }
     void write(const OpenBabel::OBMol& mol) {
       conv.Write(&const_cast<OpenBabel::OBMol&>(mol));
