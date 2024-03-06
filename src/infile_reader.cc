@@ -113,9 +113,9 @@ namespace format {
       else if (boost::algorithm::starts_with(buffer, "OUTPUT ")) {
         conf.output_file = buffer.substr(7);
       }
-      if(boost::algorithm::starts_with(buffer, "FRAGMENT ")){
-        conf.fragment_file = buffer.substr(9);
-      }
+      // if(boost::algorithm::starts_with(buffer, "FRAGMENT ")){
+      //   conf.fragment_file = buffer.substr(9);
+      // }
       else if (boost::algorithm::starts_with(buffer, "LOG ")) {
         conf.log_file = buffer.substr(4);
       }
