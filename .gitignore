@@ -41,6 +41,7 @@
 /easytest-docking
 /score-only
 /intraenergy-only
+/decompose
 /*/*~
 /*/*/*/*~
 /*/*#
@@ -52,4 +53,6 @@
 *.log
 *.grid
 *docked*.sdf
+*fragment*.sdf
+*annotated*.sdf
 testdata/*.csv

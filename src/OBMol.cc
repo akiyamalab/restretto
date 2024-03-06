@@ -94,7 +94,8 @@ namespace format{
     return mol;
   }
 
-  OpenBabel::OBMol toOBMol(const fragdock::Molecule &mol, const OpenBabel::OBMol& original_obmol) {
+  OpenBabel::OBMol toOBMol(const fragdock::Molecule &mol, const OpenBabel::OBMol& original_obmol, 
+                           int capping_atomic_num, bool capping_for_carbon, bool insert_fragment_id_to_isotope) {
     using namespace fragdock;
     using namespace std;
 
@@ -114,10 +115,53 @@ namespace format{
 
       if (mol.getAtoms()[i].getXSType() == XS_TYPE_DUMMY) {
         obmol.GetAtom(id + 1)->SetFormalCharge(0);
-        obmol.GetAtom(id + 1)->SetAtomicNum(0);
+        if (insert_fragment_id_to_isotope) {
+          obmol.GetAtom(id + 1)->SetAtomicNum(0);
+        } else {
+          obmol.GetAtom(id + 1)->SetAtomicNum(1);
+        }
       }
-      else if (mol.getAtoms()[i].getXSType() != XS_TYPE_H) {
+      else if (insert_fragment_id_to_isotope && mol.getAtoms()[i].getXSType() != XS_TYPE_H) {
         obmol.GetAtom(id + 1)->SetIsotope(mol.getAtoms()[i].getXSType());
+      }
+    }
+
+    if(capping_atomic_num >= 0){ // DO capping if non-negative value
+      std::vector<int> include_list;
+      for(int i=0; i<original_obmol.NumBonds(); i++){
+        const OpenBabel::OBBond *bond = original_obmol.GetBond(i);
+        int modification_id = -1;
+
+        //ignore bond to hydrogen
+        if(bond->GetBeginAtom()->GetAtomicNum() == 1 
+           or bond->GetEndAtom()->GetAtomicNum() == 1) continue;
+
+        int atom_id1 = bond->GetBeginAtom()->GetId();
+        int atom_id2 = bond->GetEndAtom()->GetId();
+
+        bool id1_not_in_fragment = std::find(del_id_list.begin(),
+                                             del_id_list.end(),
+                                             atom_id1) != del_id_list.end();
+        bool id2_not_in_fragment = std::find(del_id_list.begin(),
+                                             del_id_list.end(),
+                                             atom_id2) != del_id_list.end();
+        
+        if(id1_not_in_fragment == id2_not_in_fragment) continue;
+        else if(id1_not_in_fragment){
+          if(!capping_for_carbon &&
+             bond->GetEndAtom()->GetAtomicNum() == 6) continue;
+          modification_id = atom_id1;
+        }else{
+          if(!capping_for_carbon &&
+             bond->GetBeginAtom()->GetAtomicNum() == 6) continue;
+          modification_id = atom_id2;
+        }
+        include_list.push_back(modification_id);
+        obmol.GetAtomById(modification_id)->SetAtomicNum(capping_atomic_num);
+        obmol.GetAtomById(modification_id)->SetFormalCharge(0); // neutral
+      }
+      for(int i=0; i<include_list.size(); i++){
+        del_id_list.erase(std::remove(del_id_list.begin(), del_id_list.end(), include_list[i]), del_id_list.end());
       }
     }
 

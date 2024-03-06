@@ -42,6 +42,8 @@ _EASYTEST_OBJS = easytest_main.o Vector3d.o Molecule.o InterEnergyGrid.o EnergyC
 _SCOREONLY_OBJS = score_only_main.o Vector3d.o Molecule.o InterEnergyGrid.o EnergyCalculator.o infile_reader.o utils.o Atom.o log_writer_stream.o OBMol.o
 _INTRAENERGY_OBJS = intraenergy_main.o Vector3d.o Molecule.o InterEnergyGrid.o EnergyCalculator.o infile_reader.o utils.o Atom.o log_writer_stream.o OBMol.o
 
+_DECOMPOSE_OBJS = decompose_main.o Vector3d.o Molecule.o Fragment.o infile_reader.o utils.o MoleculeToFragments.o Atom.o log_writer_stream.o UnionFindTree.o OBMol.o
+
 # ALL = objs atomgrid-gen conformer-docking atom-docking unittest easytest-docking score-only intraenergy-only
 ALL = atomgrid-gen conformer-docking
 
@@ -52,6 +54,7 @@ TEST_OBJS = $(patsubst %,objs/%,$(_TEST_OBJS))
 EASYTEST_OBJS = $(patsubst %,objs/%,$(_EASYTEST_OBJS))
 SCOREONLY_OBJS = $(patsubst %,objs/%,$(_SCOREONLY_OBJS))
 INTRAENERGY_OBJS = $(patsubst %,objs/%,$(_INTRAENERGY_OBJS))
+DECOMPOSE_OBJS = $(patsubst %,objs/%,$(_DECOMPOSE_OBJS))
 
 
 all: objs $(ALL)
@@ -80,6 +83,9 @@ score-only: $(SCOREONLY_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
 
 intraenergy-only: $(INTRAENERGY_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+
+decompose: $(DECOMPOSE_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
 
 
