@@ -22,7 +22,41 @@
 #include "MoleculeToFragments.hpp"
 
 namespace {
-  format::DockingConfiguration parseArgs(int argc, char **argv){
+  struct DecomposeConfiguration {
+    std::vector<std::string> ligand_files;
+    std::string fragment_file, output_file, log_file;
+    int capping_atomic_num, max_ring_size;
+    bool do_carbon_capping, insert_fragment_id_to_isotope, merge_solitary;
+  };
+
+  DecomposeConfiguration ParseInFile(const char *filename){
+    std::ifstream ifs(filename);
+    if (ifs.fail()){
+      std::cerr << "opening config file failed: " << filename << std::endl;
+      abort();
+    }
+    DecomposeConfiguration conf;
+    std::string buffer;
+    while(!ifs.eof()){
+      std::getline(ifs, buffer);
+      if (boost::algorithm::starts_with(buffer, "LIGAND ")) {
+        conf.ligand_files.push_back(buffer.substr(7));
+      }
+      else if (boost::algorithm::starts_with(buffer, "OUTPUT ")) {
+        conf.output_file = buffer.substr(7);
+      }
+      else if(boost::algorithm::starts_with(buffer, "FRAGMENT ")){
+        conf.fragment_file = buffer.substr(9);
+      }
+      else if (boost::algorithm::starts_with(buffer, "LOG ")) {
+        conf.log_file = buffer.substr(4);
+      }
+    }
+
+    return conf;
+  }
+
+  DecomposeConfiguration parseArgs(int argc, char **argv){
 
     // Definition of options
     using namespace boost::program_options;
@@ -67,12 +101,12 @@ namespace {
     }
     
     // parse input options and configuration file
-    format::DockingConfiguration conf;
-    if (vmap.count("conf-file"))  conf                 = format::ParseInFile(vmap["conf-file"].as<std::string>().c_str());
-    if (vmap.count("ligand"))     conf.ligand_files    = vmap["ligand"].as<std::vector<std::string> >();
-    if (vmap.count("fragment"))   conf.fragment_file   = vmap["fragment"].as<std::string>();
-    if (vmap.count("output"))     conf.output_file     = vmap["output"].as<std::string>();
-    if (vmap.count("log"))        conf.log_file        = vmap["log"].as<std::string>();
+    DecomposeConfiguration conf;
+    if (vmap.count("conf-file")) conf = ParseInFile(vmap["conf-file"].as<std::string>().c_str());
+    if (vmap.count("ligand")) conf.ligand_files = vmap["ligand"].as<std::vector<std::string> >();
+    if (vmap.count("fragment")) conf.fragment_file = vmap["fragment"].as<std::string>();
+    if (vmap.count("output")) conf.output_file = vmap["output"].as<std::string>();
+    if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
     conf.capping_atomic_num = vmap["capping_atomic_num"].as<int>();
     conf.do_carbon_capping  = vmap["enable_carbon_capping"].as<bool>();
     conf.insert_fragment_id_to_isotope = vmap["ins_fragment_id"].as<bool>();
@@ -165,7 +199,7 @@ namespace {
 int main(int argc, char** argv){
 
   // config load
-  format::DockingConfiguration config = parseArgs(argc, argv);
+  DecomposeConfiguration config = parseArgs(argc, argv);
 
   // logging start
   if(config.log_file == ""){
