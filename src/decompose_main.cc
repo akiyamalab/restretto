@@ -29,33 +29,6 @@ namespace {
     bool do_carbon_capping, insert_fragment_id_to_isotope, merge_solitary;
   };
 
-  DecomposeConfiguration ParseInFile(const char *filename){
-    std::ifstream ifs(filename);
-    if (ifs.fail()){
-      std::cerr << "opening config file failed: " << filename << std::endl;
-      abort();
-    }
-    DecomposeConfiguration conf;
-    std::string buffer;
-    while(!ifs.eof()){
-      std::getline(ifs, buffer);
-      if (boost::algorithm::starts_with(buffer, "LIGAND ")) {
-        conf.ligand_files.push_back(buffer.substr(7));
-      }
-      else if (boost::algorithm::starts_with(buffer, "OUTPUT ")) {
-        conf.output_file = buffer.substr(7);
-      }
-      else if(boost::algorithm::starts_with(buffer, "FRAGMENT ")){
-        conf.fragment_file = buffer.substr(9);
-      }
-      else if (boost::algorithm::starts_with(buffer, "LOG ")) {
-        conf.log_file = buffer.substr(4);
-      }
-    }
-
-    return conf;
-  }
-
   DecomposeConfiguration parseArgs(int argc, char **argv){
 
     // Definition of options
@@ -63,9 +36,6 @@ namespace {
     options_description options("Options");
     options_description hidden("Hidden options");
     positional_options_description pos_desc;
-    hidden.add_options()
-      ("conf-file", value<std::string>(), "configuration file");
-    pos_desc.add("conf-file", 1);
     options.add_options()
       ("help,h", "show help")
       ("fragment,f", value<std::string>(), "fragment file (.mol2 file)")
@@ -87,8 +57,7 @@ namespace {
 
 
     // showing help dialog
-    bool insufficient_input = (!vmap.count("conf-file")) &&
-      (!vmap.count("fragment") || !vmap.count("ligand") || !vmap.count("output"));
+    bool insufficient_input = (!vmap.count("fragment") || !vmap.count("ligand") || !vmap.count("output"));
     bool help_mode = vmap.count("help");
     if (insufficient_input || help_mode){
       if (!help_mode){
@@ -102,7 +71,6 @@ namespace {
     
     // parse input options and configuration file
     DecomposeConfiguration conf;
-    if (vmap.count("conf-file")) conf = ParseInFile(vmap["conf-file"].as<std::string>().c_str());
     if (vmap.count("ligand")) conf.ligand_files = vmap["ligand"].as<std::vector<std::string> >();
     if (vmap.count("fragment")) conf.fragment_file = vmap["fragment"].as<std::string>();
     if (vmap.count("output")) conf.output_file = vmap["output"].as<std::string>();
