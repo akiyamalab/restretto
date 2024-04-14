@@ -50,7 +50,9 @@ namespace {
 }
 
 namespace fragdock {
-  vector<Fragment> DecomposeMolecule(const Molecule &mol) {
+  vector<Fragment> DecomposeMolecule(const Molecule &mol, 
+                                     int max_ring_size, 
+                                     bool merge_solitary) { // merge_solitary is not used.
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
     // unite two atoms if the bond between them is NOT 'Single'
@@ -63,9 +65,11 @@ namespace fragdock {
     }
     // unite members of ring systems
     vector<vector<int> > rings = ringDetector(atoms.size(), bonds);
-    for (int i = 0; i < rings.size(); i++)
+    for (int i = 0; i < rings.size(); i++) {
+      if (max_ring_size != -1 and rings[i].size() > max_ring_size) continue;
       for (int j = 0; j < rings[i].size(); j++)
         uf.unite(rings[i][0], rings[i][j]);
+    }
 
     // count adjacent H
     vector<int> h_cnt(atoms.size(), false);
@@ -190,11 +194,13 @@ namespace fragdock {
     return fragments;
   }
 
-  std::vector<std::vector<Fragment> > DecomposeMolecule(const std::vector<Molecule> &mols){
+  std::vector<std::vector<Fragment> > DecomposeMolecule(const std::vector<Molecule> &mols, 
+                                                        int max_ring_size, 
+                                                        bool merge_solitary){
     std::vector<std::vector<Fragment> > ret(mols.size());
     #pragma omp parallel for // decomposition is independent process for each molecule
     for(int i=0; i<mols.size(); i++){
-      ret[i] = DecomposeMolecule(mols[i]);
+      ret[i] = DecomposeMolecule(mols[i], max_ring_size, merge_solitary);
     }
 
     return ret;
