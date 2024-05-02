@@ -52,7 +52,8 @@ namespace {
 namespace fragdock {
   vector<Fragment> DecomposeMolecule(const Molecule &mol, 
                                      int max_ring_size, 
-                                     bool merge_solitary) { // merge_solitary is not used.
+                                     bool merge_solitary,  // merge_solitary is not used.
+                                     bool dummy_atom) {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
     // unite two atoms if the bond between them is NOT 'Single'
@@ -152,8 +153,13 @@ namespace fragdock {
         // near_ids[set_id[a]].push_back(b);
         // near_ids[set_id[b]].push_back(a);
 
-        dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_DUMMY));
-        dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_DUMMY));
+        if (dummy_atom) {
+          dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_H));
+          dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_H));
+        } else {
+          dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_DUMMY));
+          dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_DUMMY));
+        }
         bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotor));
         bonds_in_frags[set_id[b]].push_back(Bond(a, b, bond.is_rotor));
       }
@@ -196,11 +202,12 @@ namespace fragdock {
 
   std::vector<std::vector<Fragment> > DecomposeMolecule(const std::vector<Molecule> &mols, 
                                                         int max_ring_size, 
-                                                        bool merge_solitary){
+                                                        bool merge_solitary,
+                                                        bool dummy_atom){
     std::vector<std::vector<Fragment> > ret(mols.size());
     #pragma omp parallel for // decomposition is independent process for each molecule
     for(int i=0; i<mols.size(); i++){
-      ret[i] = DecomposeMolecule(mols[i], max_ring_size, merge_solitary);
+      ret[i] = DecomposeMolecule(mols[i], max_ring_size, merge_solitary, dummy_atom);
     }
 
     return ret;
