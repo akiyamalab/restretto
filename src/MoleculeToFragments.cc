@@ -46,13 +46,35 @@ namespace {
     return ret;
   }
 
+  template<typename Container>
+  bool exist_in(const Container& c, const typename Container::value_type& v) {
+    return ( c.end() != std::find(c.begin(), c.end(), v) );
+  }
 
+  Molecule gen_new_mol(const Molecule& mol, const std::vector<int>& id_map) {
+    const vector<Atom> &atoms = mol.getAtoms();
+    const vector<Bond> &bonds = mol.getBonds();
+
+    Molecule temp_mol;
+    for (int j = 0; j < id_map.size(); j++) {
+      temp_mol.append(atoms[id_map[j]]);
+    }
+    for (int j = 0; j < bonds.size(); j++) {
+      if (exist_in(id_map, bonds[j].atom_id1) && exist_in(id_map, bonds[j].atom_id2)) {
+        Bond new_bond = bonds[j];
+        new_bond.atom_id1 = std::find(id_map.begin(), id_map.end(), bonds[j].atom_id1) - id_map.begin();
+        new_bond.atom_id2 = std::find(id_map.begin(), id_map.end(), bonds[j].atom_id2) - id_map.begin();
+        temp_mol.append(new_bond);
+      }
+    }
+    return temp_mol;
+  }
 }
 
 namespace fragdock {
   vector<Fragment> DecomposeMolecule(const Molecule &mol, 
                                      int max_ring_size, 
-                                     bool merge_solitary,  // merge_solitary is not used.
+                                     bool merge_solitary,
                                      bool dummy_atom) {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
@@ -98,6 +120,76 @@ namespace fragdock {
           }
           swap(a, b);
         }
+      }
+    }
+    // merge solitary atoms
+    // !!! depends on the order of `bonds` !!!
+    for (int i = 0; i < bonds.size(); i++) {
+      if (merge_solitary == false) break;
+
+      // generate connected molecule
+      const Bond &bond = bonds[i];
+      int a = bond.atom_id1;
+      int b = bond.atom_id2;
+
+      // bonds connected to hydrogen atoms will not be treated
+      if (atoms[a].getXSType() == XS_TYPE_H or atoms[b].getXSType() == XS_TYPE_H) continue;
+
+      // check if already united
+      if (uf.same(a, b)) continue; // no longer needed to do anything
+
+      // try to unite atoms a and b
+      // united_set: a set of atom ids in a (sub) fragment which includes a and b 
+      // prev_set_a: a set of atom ids in a (sub) fragment which includes only a and not b
+      // prev_set_b: a set of atom ids in a (sub) fragment which includes only b and not a
+      utils::UnionFindTree uf_temp(uf);
+      uf_temp.unite(a, b);
+      const vector<vector<int> > prev_sets = uf.getSets();
+      const vector<vector<int> > united_sets = uf_temp.getSets();
+      vector<int> united_set;
+      vector<int> prev_set_a, prev_set_b;
+      for (int i = 0; i < united_sets.size(); i++) {
+        if (exist_in(united_sets[i], a)) {
+          united_set = united_sets[i];
+          break;
+        }
+      }
+      for (int i = 0; i < prev_sets.size(); i++) {
+        if (exist_in(prev_sets[i], a)) {
+          prev_set_a = prev_sets[i];
+        }
+        if (exist_in(prev_sets[i], b)) {
+          prev_set_b = prev_sets[i];
+        }
+      }
+
+      Molecule united_mol = gen_new_mol(mol, united_set);
+      Molecule prev_mol_a = gen_new_mol(mol, prev_set_a);
+      Molecule prev_mol_b = gen_new_mol(mol, prev_set_b);
+      int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
+        + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
+      int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
+
+      // avoid new ring generation
+      if (nRings_prev != nRings_united) { // there are new rings
+        continue;
+      }
+
+      bool ok = true; // is it ok to merge?
+      // internal rotation test
+      // check the rotation invariancy by actually rotated it
+      for (int j = 0; j < united_mol.getBonds().size(); j++) {
+        Molecule test_united_mol;
+        test_united_mol.append(united_mol);
+        if (united_mol.getBonds()[j].is_rotor != true) continue;
+        test_united_mol.bondRotate(j, 1); //1 rad rotation
+        if (united_mol.calcRMSD(test_united_mol) >= 1e-5) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) {
+        uf.unite(a, b);
       }
     }
     // unite H
@@ -150,9 +242,6 @@ namespace fragdock {
         Vector3d vec_a = atoms[a];
         Vector3d vec_b = atoms[b];
 
-        // near_ids[set_id[a]].push_back(b);
-        // near_ids[set_id[b]].push_back(a);
-
         if (dummy_atom) {
           dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_H));
           dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_H));
@@ -164,7 +253,6 @@ namespace fragdock {
         bonds_in_frags[set_id[b]].push_back(Bond(a, b, bond.is_rotor));
       }
       else {
-        // bonds_in_frags[set_id[a]].push_back(bond);
         bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotor));
       }
     }
@@ -186,10 +274,6 @@ namespace fragdock {
         frag_atoms.push_back(dummys[i][di]);
         ++di;
       }
-      // for (auto& j : dummys[i]) {
-      //   frag_atoms.push_back(j);
-      // }
-      // if (dummys[i].size() >= 2 && 2 >= (int)frag_atoms.size() - (int)dummys[i].size()) continue;
 
       Fragment frag(i, frag_atoms);
       for (auto b : bonds_in_frags[i]) frag.append(b);

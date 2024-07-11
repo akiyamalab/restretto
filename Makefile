@@ -32,7 +32,7 @@ OBABELLP = -L$(OBABEL_INSTALL_PATH)/lib
 
 .SUFFIXES: .cc .o
 
-_GRID_OBJS = grid_main.o utils.o infile_reader.o Molecule.o Vector3d.o Atom.o AtomInterEnergyGrid.o InterEnergyGrid.o EnergyCalculator.o log_writer_stream.o OBMol.o
+_GRID_OBJS = grid_main.o utils.o infile_reader.o Molecule.o Vector3d.o Atom.o AtomInterEnergyGrid.o InterEnergyGrid.o EnergyCalculator.o log_writer_stream.o OBMol.o UnionFindTree.o
 _CONFDOCK_OBJS = fraggrid_main.o Vector3d.o InterEnergyGrid.o Molecule.o Fragment.o InterEnergyGrid.o EnergyCalculator.o infile_reader.o utils.o MoleculeToFragments.o AtomInterEnergyGrid.o FragmentInterEnergyGrid.o Atom.o log_writer_stream.o UnionFindTree.o OBMol.o CalcMCFP.o Optimizer.o RMSD.o
 _ATOMDOCK_OBJS = nofrag_main.o Vector3d.o InterEnergyGrid.o Molecule.o InterEnergyGrid.o EnergyCalculator.o infile_reader.o utils.o AtomInterEnergyGrid.o Atom.o log_writer_stream.o OBMol.o Optimizer.o
 _TEST_OBJS = Atom.o EnergyCalculator.o Molecule.o utils.o Vector3d.o TestEnergyCalculator.o TestMain.o

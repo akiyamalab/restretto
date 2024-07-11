@@ -3,6 +3,7 @@
 #include <set>
 
 #include "Molecule.hpp"
+#include "UnionFindTree.hpp"
 
 namespace fragdock {
   std::ostream& operator<< (std::ostream& os, const Bond& bond) {
@@ -38,10 +39,49 @@ namespace fragdock {
       atoms[i].rotate(vec);
   }
 
+  void Molecule::axisRotate(const Vector3d &axis, fltype th) {
+    for(int i = 0; i < atoms.size(); i++)
+      atoms[i].axisRotate(axis, th);
+  }
+
+  void Molecule::axisRotate(const Vector3d& base, const Vector3d& axis, fltype th, const std::vector<int>& id_set) {
+    Vector3d pos = getCenter();
+    translate(-base);
+    for(int i = 0; i < id_set.size(); i++)
+      atoms[id_set[i]].axisRotate(axis, th);
+    translate(pos - getCenter());
+  }
+
+  void Molecule::bondRotate(const int bond_id, fltype th) {
+    if(bond_id >= bonds.size()){
+      std::cerr << "[Molecule::bondRotate] invarid bond id: " << bond_id << std::endl;
+      std::cerr << "bonds.size() = " << bonds.size() << std::endl;
+      for (int i = 0; i < bonds.size(); ++i) {
+        std::cerr << "BondId:" << i << " " << bonds[i] << std::endl;
+      }
+      exit(1);
+    }
+
+    // detect the bond is in a ring or not 
+    utils::UnionFindTree uf((int)atoms.size());
+    for(int i=0; i<bonds.size(); i++){
+      if (i == bond_id) continue;
+      const Bond &bond = bonds[i];
+      uf.unite(bond.atom_id1, bond.atom_id2);
+    }
+    if(uf.getSets()[0].size() == (int)atoms.size()) return; // do nothing
+    fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
+    axisRotate(atoms[bonds[bond_id].atom_id1], bond_axis, th, uf.getSets()[0]);
+    //std::cout << *this << std::endl;
+  }
+
   void Molecule::append(const Molecule &o) {
     for(int i = 0; i < o.size(); i++)
       append(o.getAtom(i));
 
+    for(int i = 0; i < o.bonds.size(); i++)
+      append(o.bonds[i]);
+    
     // calcRadius();
   }
 
@@ -239,4 +279,46 @@ namespace fragdock {
     return ret;
   }
 
+  fltype Molecule::calcRMSD(const Molecule& mol) const {
+    // check if the two molecules are the same
+    if (getsmiles() != mol.getsmiles()) {
+      std::cerr << "[Molecule::calcRMSD] different smiles" << std::endl;
+      return HUGE_VAL;
+    }
+
+    // check if the two molecules have the same graph distances
+    bool eq_gd = true;
+    std::vector<std::vector<int> > this_gd = getGraphDistances(), mol_gd = mol.getGraphDistances();
+    if (this_gd.size() != mol_gd.size()) {
+      eq_gd = false;
+    } else {
+      for (int i = 0; i < this_gd.size(); ++i) {
+        if (this_gd[i].size() != mol_gd[i].size()) {
+          eq_gd = false;
+          break;
+        }
+        for (int j = 0; j < this_gd[i].size(); ++j) {
+          if (this_gd[i][j] != mol_gd[i][j]) {
+            eq_gd = false;
+            break;
+          }
+        }
+        if (!eq_gd) break;
+      }
+    }
+    if (!eq_gd) {
+      std::cerr << "[Molecule::calcRMSD] different graph distances" << std::endl;
+      return HUGE_VAL;
+    }
+
+    // calculate RMSD
+    fltype sd = 0.0;
+    for (int i = 0; i < size(); ++i) {
+      if (getAtom(i).getXSType() != XS_TYPE_H and getAtom(i).getXSType() != XS_TYPE_DUMMY
+          and mol.getAtom(i).getXSType() != XS_TYPE_H and mol.getAtom(i).getXSType() != XS_TYPE_DUMMY) {
+        sd += (getAtom(i) - mol.getAtom(i)).norm();
+      }
+    }
+    return std::sqrt(sd/size());
+  }
 }
