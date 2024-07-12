@@ -287,26 +287,7 @@ namespace fragdock {
     }
 
     // check if the two molecules have the same graph distances
-    bool eq_gd = true;
-    std::vector<std::vector<int> > this_gd = getGraphDistances(), mol_gd = mol.getGraphDistances();
-    if (this_gd.size() != mol_gd.size()) {
-      eq_gd = false;
-    } else {
-      for (int i = 0; i < this_gd.size(); ++i) {
-        if (this_gd[i].size() != mol_gd[i].size()) {
-          eq_gd = false;
-          break;
-        }
-        for (int j = 0; j < this_gd[i].size(); ++j) {
-          if (this_gd[i][j] != mol_gd[i][j]) {
-            eq_gd = false;
-            break;
-          }
-        }
-        if (!eq_gd) break;
-      }
-    }
-    if (!eq_gd) {
+    if (getGraphDistances() != mol.getGraphDistances()) {
       std::cerr << "[Molecule::calcRMSD] different graph distances" << std::endl;
       return HUGE_VAL;
     }
