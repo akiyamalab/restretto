@@ -1,5 +1,4 @@
 #include "MoleculeToFragments.hpp"
-#include "UnionFindTree.hpp"
 namespace {
   using namespace std;
   using namespace fragdock;
@@ -72,6 +71,68 @@ namespace {
 }
 
 namespace fragdock {
+  bool IsMergeable(const Molecule &mol, utils::UnionFindTree uf, int a, int b) {
+    const vector<Atom> &atoms = mol.getAtoms();
+    const vector<Bond> &bonds = mol.getBonds();
+
+    // bonds connected to hydrogen atoms will not be treated
+    if (atoms[a].getXSType() == XS_TYPE_H or atoms[b].getXSType() == XS_TYPE_H) return false;
+
+    // check if already united
+    if (uf.same(a, b)) return false; // no longer needed to do anything
+
+    // try to unite atoms a and b
+    // united_set: a set of atom ids in a (sub) fragment which includes a and b 
+    // prev_set_a: a set of atom ids in a (sub) fragment which includes only a and not b
+    // prev_set_b: a set of atom ids in a (sub) fragment which includes only b and not a
+    utils::UnionFindTree uf_temp(uf);
+    uf_temp.unite(a, b);
+    const vector<vector<int> > prev_sets = uf.getSets();
+    const vector<vector<int> > united_sets = uf_temp.getSets();
+    vector<int> united_set;
+    vector<int> prev_set_a, prev_set_b;
+    for (int i = 0; i < united_sets.size(); i++) {
+      if (exist_in(united_sets[i], a)) {
+        united_set = united_sets[i];
+        break;
+      }
+    }
+    for (int i = 0; i < prev_sets.size(); i++) {
+      if (exist_in(prev_sets[i], a)) {
+        prev_set_a = prev_sets[i];
+      }
+      if (exist_in(prev_sets[i], b)) {
+        prev_set_b = prev_sets[i];
+      }
+    }
+
+    Molecule united_mol = gen_new_mol(mol, united_set);
+    Molecule prev_mol_a = gen_new_mol(mol, prev_set_a);
+    Molecule prev_mol_b = gen_new_mol(mol, prev_set_b);
+    int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
+      + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
+    int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
+
+    // avoid new ring generation
+    if (nRings_prev != nRings_united) { // there are new rings
+      return false;
+    }
+
+    // internal rotation test
+    // check the rotation invariancy by actually rotated it
+    for (int j = 0; j < united_mol.getBonds().size(); j++) {
+      Molecule test_united_mol;
+      test_united_mol.append(united_mol);
+      if (united_mol.getBonds()[j].is_rotor != true) continue;
+      test_united_mol.bondRotate(j, 1); //1 rad rotation
+      if (united_mol.calcRMSD(test_united_mol) >= 1e-5) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   vector<Fragment> DecomposeMolecule(const Molecule &mol, 
                                      int max_ring_size, 
                                      bool merge_solitary,
@@ -132,63 +193,7 @@ namespace fragdock {
       int a = bond.atom_id1;
       int b = bond.atom_id2;
 
-      // bonds connected to hydrogen atoms will not be treated
-      if (atoms[a].getXSType() == XS_TYPE_H or atoms[b].getXSType() == XS_TYPE_H) continue;
-
-      // check if already united
-      if (uf.same(a, b)) continue; // no longer needed to do anything
-
-      // try to unite atoms a and b
-      // united_set: a set of atom ids in a (sub) fragment which includes a and b 
-      // prev_set_a: a set of atom ids in a (sub) fragment which includes only a and not b
-      // prev_set_b: a set of atom ids in a (sub) fragment which includes only b and not a
-      utils::UnionFindTree uf_temp(uf);
-      uf_temp.unite(a, b);
-      const vector<vector<int> > prev_sets = uf.getSets();
-      const vector<vector<int> > united_sets = uf_temp.getSets();
-      vector<int> united_set;
-      vector<int> prev_set_a, prev_set_b;
-      for (int i = 0; i < united_sets.size(); i++) {
-        if (exist_in(united_sets[i], a)) {
-          united_set = united_sets[i];
-          break;
-        }
-      }
-      for (int i = 0; i < prev_sets.size(); i++) {
-        if (exist_in(prev_sets[i], a)) {
-          prev_set_a = prev_sets[i];
-        }
-        if (exist_in(prev_sets[i], b)) {
-          prev_set_b = prev_sets[i];
-        }
-      }
-
-      Molecule united_mol = gen_new_mol(mol, united_set);
-      Molecule prev_mol_a = gen_new_mol(mol, prev_set_a);
-      Molecule prev_mol_b = gen_new_mol(mol, prev_set_b);
-      int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
-        + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
-      int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
-
-      // avoid new ring generation
-      if (nRings_prev != nRings_united) { // there are new rings
-        continue;
-      }
-
-      bool ok = true; // is it ok to merge?
-      // internal rotation test
-      // check the rotation invariancy by actually rotated it
-      for (int j = 0; j < united_mol.getBonds().size(); j++) {
-        Molecule test_united_mol;
-        test_united_mol.append(united_mol);
-        if (united_mol.getBonds()[j].is_rotor != true) continue;
-        test_united_mol.bondRotate(j, 1); //1 rad rotation
-        if (united_mol.calcRMSD(test_united_mol) >= 1e-5) {
-          ok = false;
-          break;
-        }
-      }
-      if (ok) {
+      if (IsMergeable(mol, uf, a, b)) {
         uf.unite(a, b);
       }
     }
