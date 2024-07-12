@@ -117,7 +117,7 @@ namespace {
       std::vector<std::string> frag_smiles;
       OpenBabel::OBMol obmol = molecules[i];
       fragdock::Molecule mol = convert_molecule(obmol);
-      std::vector<fragdock::Fragment> frags = fragdock::DecomposeMolecule(mol, max_ring_size, merge_solitary, true);
+      std::vector<fragdock::Fragment> frags = fragdock::DecomposeMolecule(mol, max_ring_size, merge_solitary, false);
       
       for(std::vector<fragdock::Fragment>::iterator fit=frags.begin(); fit!=frags.end(); ++fit){
         OpenBabel::OBMol obmol = format::toOBMol(*fit, molecules[i], capping_atomic_num, capping_for_carbon, insert_fragment_id_to_isotope);

@@ -243,11 +243,11 @@ namespace fragdock {
         Vector3d vec_b = atoms[b];
 
         if (dummy_atom) {
-          dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_H));
-          dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_H));
-        } else {
           dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_DUMMY));
           dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_DUMMY));
+        } else {
+          dummys[set_id[a]].push_back(Atom(b, vec_b, XS_TYPE_H));
+          dummys[set_id[b]].push_back(Atom(a, vec_a, XS_TYPE_H));
         }
         bonds_in_frags[set_id[a]].push_back(Bond(a, b, bond.is_rotor));
         bonds_in_frags[set_id[b]].push_back(Bond(a, b, bond.is_rotor));
