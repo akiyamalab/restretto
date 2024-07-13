@@ -85,9 +85,12 @@ namespace format{
 
     fragdock::Molecule mol(fatoms, obmol.GetTitle(), OpenBabel::canonicalSmiles(obmol));
     for(int i = 0; i < obmol.NumBonds(); i++){
+      bool is_rotor = obmol.GetBond(i)->IsRotor() 
+                   || obmol.GetBond(i)->GetBeginAtom()->IsHydrogen() 
+                   || obmol.GetBond(i)->GetEndAtom()->IsHydrogen();
       mol.append(fragdock::Bond(obmol.GetBond(i)->GetBeginAtom()->GetId(),
 				obmol.GetBond(i)->GetEndAtom()->GetId(),
-				obmol.GetBond(i)->IsRotor() ));
+				is_rotor ));
 				// obmol.GetBond(i)->IsRotor() || (obmol.GetBond(i)->IsSingle() && !obmol.GetBond(i)->IsInRing()) ));
     }
 
