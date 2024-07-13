@@ -3,7 +3,6 @@
 #include <set>
 
 #include "Molecule.hpp"
-#include "UnionFindTree.hpp"
 
 namespace fragdock {
   std::ostream& operator<< (std::ostream& os, const Bond& bond) {
@@ -50,29 +49,6 @@ namespace fragdock {
     for(int i = 0; i < id_set.size(); i++)
       atoms[id_set[i]].axisRotate(axis, th);
     translate(pos - getCenter());
-  }
-
-  void Molecule::bondRotate(const int bond_id, fltype th) {
-    if(bond_id >= bonds.size()){
-      std::cerr << "[Molecule::bondRotate] invarid bond id: " << bond_id << std::endl;
-      std::cerr << "bonds.size() = " << bonds.size() << std::endl;
-      for (int i = 0; i < bonds.size(); ++i) {
-        std::cerr << "BondId:" << i << " " << bonds[i] << std::endl;
-      }
-      exit(1);
-    }
-
-    // detect the bond is in a ring or not 
-    utils::UnionFindTree uf((int)atoms.size());
-    for(int i=0; i<bonds.size(); i++){
-      if (i == bond_id) continue;
-      const Bond &bond = bonds[i];
-      uf.unite(bond.atom_id1, bond.atom_id2);
-    }
-    if(uf.getSets()[0].size() == (int)atoms.size()) return; // do nothing
-    fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
-    axisRotate(atoms[bonds[bond_id].atom_id1], bond_axis, th, uf.getSets()[0]);
-    //std::cout << *this << std::endl;
   }
 
   void Molecule::append(const Molecule &o) {

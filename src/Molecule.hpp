@@ -39,7 +39,7 @@ namespace fragdock {
     void rotate(const Vector3d& vec);
     void axisRotate(const Vector3d& axis, fltype th);
     void axisRotate(const Vector3d& base, const Vector3d& axis, fltype th, const std::vector<int>& id_set);
-    void bondRotate(const int bond_id, fltype th);
+    // void bondRotate(const int bond_id, fltype th);
     void append(const Molecule &o);
     void append(const Atom &o);
     void append(const Bond &bond);

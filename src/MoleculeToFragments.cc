@@ -68,6 +68,34 @@ namespace {
     }
     return temp_mol;
   }
+
+  Molecule bond_rotate(const Molecule& mol, int bond_id, fltype th) {
+    const vector<Atom> &atoms = mol.getAtoms();
+    const vector<Bond> &bonds = mol.getBonds();
+
+    if(bond_id >= bonds.size()){
+      std::cerr << "[Molecule::bondRotate] invarid bond id: " << bond_id << std::endl;
+      std::cerr << "bonds.size() = " << bonds.size() << std::endl;
+      for (int i = 0; i < bonds.size(); ++i) {
+        std::cerr << "BondId:" << i << " " << bonds[i] << std::endl;
+      }
+      exit(1);
+    }
+
+    // detect the bond is in a ring or not 
+    utils::UnionFindTree uf((int)atoms.size());
+    for(int i=0; i<bonds.size(); i++){
+      if (i == bond_id) continue;
+      const Bond &bond = bonds[i];
+      uf.unite(bond.atom_id1, bond.atom_id2);
+    }
+    if(uf.getSets()[0].size() == (int)atoms.size()) return mol; // do nothing
+    fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
+    Molecule new_mol = mol;
+    new_mol.axisRotate(atoms[bonds[bond_id].atom_id1], bond_axis, th, uf.getSets()[0]);
+    
+    return new_mol;
+  }
 }
 
 namespace fragdock {
@@ -121,10 +149,8 @@ namespace fragdock {
     // internal rotation test
     // check the rotation invariancy by actually rotated it
     for (int j = 0; j < united_mol.getBonds().size(); j++) {
-      Molecule test_united_mol;
-      test_united_mol.append(united_mol);
       if (united_mol.getBonds()[j].is_rotor != true) continue;
-      test_united_mol.bondRotate(j, 1); //1 rad rotation
+      Molecule test_united_mol = bond_rotate(united_mol, j, 1); //1 rad rotation
       if (united_mol.calcRMSD(test_united_mol) >= 1e-5) {
         return false;
       }
