@@ -1,4 +1,5 @@
 #include "MoleculeToFragments.hpp"
+#include "UnionFindTree.hpp"
 namespace {
   using namespace std;
   using namespace fragdock;
@@ -96,9 +97,7 @@ namespace {
     
     return new_mol;
   }
-}
 
-namespace fragdock {
   bool IsMergeable(const Molecule &mol, utils::UnionFindTree uf, int a, int b) {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
@@ -158,7 +157,9 @@ namespace fragdock {
 
     return true;
   }
+}
 
+namespace fragdock {
   vector<Fragment> DecomposeMolecule(const Molecule &mol, 
                                      int max_ring_size, 
                                      bool merge_solitary,
