@@ -51,7 +51,7 @@ namespace {
     return ( c.end() != std::find(c.begin(), c.end(), v) );
   }
 
-  Molecule gen_new_mol(const Molecule& mol, const std::vector<int>& id_map) {
+  Molecule extract_substructure(const Molecule& mol, const std::vector<int>& id_map) {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
 
@@ -90,7 +90,7 @@ namespace {
       const Bond &bond = bonds[i];
       uf.unite(bond.atom_id1, bond.atom_id2);
     }
-    if(uf.getSets()[0].size() == (int)atoms.size()) return mol; // do nothing
+    if(uf.getSets()[0].size() == (int)atoms.size()) return mol; // all atoms are connected
     fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
     Molecule new_mol = mol;
     new_mol.axisRotate(atoms[bonds[bond_id].atom_id1], bond_axis, th, uf.getSets()[0]);
@@ -105,9 +105,9 @@ namespace {
     atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
 
     // generate molecules that are united and previous
-    Molecule united_mol = gen_new_mol(mol, atomids_subst_united);
-    Molecule prev_mol_a = gen_new_mol(mol, atomids_subst_a);
-    Molecule prev_mol_b = gen_new_mol(mol, atomids_subst_b);
+    Molecule united_mol = extract_substructure(mol, atomids_subst_united);
+    Molecule prev_mol_a = extract_substructure(mol, atomids_subst_a);
+    Molecule prev_mol_b = extract_substructure(mol, atomids_subst_b);
 
     // avoid new ring generation
     int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
