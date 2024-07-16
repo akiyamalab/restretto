@@ -7,11 +7,9 @@
 namespace fragdock {
   std::vector<Fragment> DecomposeMolecule(const Molecule &mol, 
                                           int max_ring_size=-1, 
-                                          bool merge_solitary=false,
-                                          bool dummy_atom=true);
+                                          bool merge_solitary=false);
   std::vector<std::vector<Fragment> > DecomposeMolecule(const std::vector<Molecule> &mols, 
                                                         int max_ring_size=-1, 
-                                                        bool merge_solitary=false,
-                                                        bool dummy_atom=true);
+                                                        bool merge_solitary=false);
 }
 #endif
