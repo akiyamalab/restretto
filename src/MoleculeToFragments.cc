@@ -98,49 +98,21 @@ namespace {
     return new_mol;
   }
 
-  bool IsMergeable(const Molecule &mol, utils::UnionFindTree uf, int a, int b) {
-    const vector<Atom> &atoms = mol.getAtoms();
-    const vector<Bond> &bonds = mol.getBonds();
-
-    // bonds connected to hydrogen atoms will not be treated
-    if (atoms[a].getXSType() == XS_TYPE_H or atoms[b].getXSType() == XS_TYPE_H) return false;
-
-    // check if already united
-    if (uf.same(a, b)) return false; // no longer needed to do anything
-
+  bool IsMergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     // try to unite atoms a and b
-    // united_set: a set of atom ids in a (sub) fragment which includes a and b 
-    // prev_set_a: a set of atom ids in a (sub) fragment which includes only a and not b
-    // prev_set_b: a set of atom ids in a (sub) fragment which includes only b and not a
-    utils::UnionFindTree uf_temp(uf);
-    uf_temp.unite(a, b);
-    const vector<vector<int> > prev_sets = uf.getSets();
-    const vector<vector<int> > united_sets = uf_temp.getSets();
-    vector<int> united_set;
-    vector<int> prev_set_a, prev_set_b;
-    for (int i = 0; i < united_sets.size(); i++) {
-      if (exist_in(united_sets[i], a)) {
-        united_set = united_sets[i];
-        break;
-      }
-    }
-    for (int i = 0; i < prev_sets.size(); i++) {
-      if (exist_in(prev_sets[i], a)) {
-        prev_set_a = prev_sets[i];
-      }
-      if (exist_in(prev_sets[i], b)) {
-        prev_set_b = prev_sets[i];
-      }
-    }
+    vector<int> atomids_subst_united;
+    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
+    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
 
-    Molecule united_mol = gen_new_mol(mol, united_set);
-    Molecule prev_mol_a = gen_new_mol(mol, prev_set_a);
-    Molecule prev_mol_b = gen_new_mol(mol, prev_set_b);
+    // generate molecules that are united and previous
+    Molecule united_mol = gen_new_mol(mol, atomids_subst_united);
+    Molecule prev_mol_a = gen_new_mol(mol, atomids_subst_a);
+    Molecule prev_mol_b = gen_new_mol(mol, atomids_subst_b);
+
+    // avoid new ring generation
     int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
       + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
     int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
-
-    // avoid new ring generation
     if (nRings_prev != nRings_united) { // there are new rings
       return false;
     }
@@ -148,7 +120,9 @@ namespace {
     // internal rotation test
     // check the rotation invariancy by actually rotated it
     for (int j = 0; j < united_mol.getBonds().size(); j++) {
-      if (united_mol.getBonds()[j].is_rotor != true) continue;
+      if (!united_mol.getBonds()[j].is_rotor) {
+        continue;
+      }
       Molecule test_united_mol = bond_rotate(united_mol, j, 1); //1 rad rotation
       if (united_mol.calcRMSD(test_united_mol) >= 1e-5) {
         return false;
@@ -210,7 +184,7 @@ namespace fragdock {
         }
       }
     }
-    // merge solitary atoms
+    // merge solitary atoms except H
     // !!! depends on the order of `bonds` !!!
     for (int i = 0; i < bonds.size(); i++) {
       if (merge_solitary == false) break;
@@ -219,11 +193,28 @@ namespace fragdock {
       const Bond &bond = bonds[i];
       int a = bond.atom_id1;
       int b = bond.atom_id2;
+      
+      if (atoms[a].getXSType() == XS_TYPE_H || atoms[b].getXSType() == XS_TYPE_H) continue;
+      if (uf.same(a, b)) continue;
 
-      if (IsMergeable(mol, uf, a, b)) {
+      const vector<vector<int> > uf_sets = uf.getSets();
+      vector<int> atomids_subst_a, atomids_subst_b;
+      for (int i = 0; i < uf_sets.size(); i++) {
+        if (exist_in(uf_sets[i], a)) {
+          // atomID set of fragments that contain atomID a
+          atomids_subst_a = uf_sets[i];
+        }
+        if (exist_in(uf_sets[i], b)) {
+          // atomID set of fragments that contain atomID b
+          atomids_subst_b = uf_sets[i];
+        }
+      }
+
+      if (IsMergeable(mol, atomids_subst_a, atomids_subst_b)) {
         uf.unite(a, b);
       }
     }
+
     // unite H
     for (int i = 0; i < bonds.size(); i++) {
       const Bond &bond = bonds[i];
