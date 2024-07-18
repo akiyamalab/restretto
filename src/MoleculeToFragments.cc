@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "MoleculeToFragments.hpp"
 #include "UnionFindTree.hpp"
 namespace {
@@ -74,23 +76,24 @@ namespace {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
 
-    if(bond_id >= bonds.size()){
-      std::cerr << "[Molecule::bondRotate] invarid bond id: " << bond_id << std::endl;
-      std::cerr << "bonds.size() = " << bonds.size() << std::endl;
+    if (bond_id >= bonds.size()) {
+      std::ostringstream oss;
+      oss << "[Molecule::bondRotate] invarid bond id: " << bond_id << std::endl;
+      oss << "bonds.size() = " << bonds.size() << std::endl;
       for (int i = 0; i < bonds.size(); ++i) {
-        std::cerr << "BondId:" << i << " " << bonds[i] << std::endl;
+        oss << "BondId:" << i << " " << bonds[i] << std::endl;
       }
-      exit(1);
+      throw std::out_of_range(oss.str());
     }
 
     // detect the bond is in a ring or not 
     utils::UnionFindTree uf((int)atoms.size());
-    for(int i=0; i<bonds.size(); i++){
+    for (int i=0; i<bonds.size(); i++) {
       if (i == bond_id) continue;
       const Bond &bond = bonds[i];
       uf.unite(bond.atom_id1, bond.atom_id2);
     }
-    if(uf.getSets()[0].size() == (int)atoms.size()) return mol; // all atoms are connected
+    if (uf.getSets()[0].size() == (int)atoms.size()) return mol; // all atoms are connected
 
     fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
     Molecule new_mol = mol;
