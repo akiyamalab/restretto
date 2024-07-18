@@ -43,12 +43,9 @@ namespace fragdock {
       atoms[i].axisRotate(axis, th);
   }
 
-  void Molecule::axisRotate(const Vector3d& base, const Vector3d& axis, fltype th, const std::vector<int>& id_set) {
-    Vector3d pos = getCenter();
-    translate(-base);
+  void Molecule::axisRotate(const Vector3d& axis, fltype th, const std::vector<int>& id_set) {
     for(int i = 0; i < id_set.size(); i++)
       atoms[id_set[i]].axisRotate(axis, th);
-    translate(pos - getCenter());
   }
 
   void Molecule::append(const Molecule &o) {

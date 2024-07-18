@@ -91,9 +91,12 @@ namespace {
       uf.unite(bond.atom_id1, bond.atom_id2);
     }
     if(uf.getSets()[0].size() == (int)atoms.size()) return mol; // all atoms are connected
+
     fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
     Molecule new_mol = mol;
-    new_mol.axisRotate(atoms[bonds[bond_id].atom_id1], bond_axis, th, uf.getSets()[0]);
+    new_mol.translate(-atoms[bonds[bond_id].atom_id1]);
+    new_mol.axisRotate(bond_axis, th, uf.getSets()[0]);
+    new_mol.translate(mol.getCenter() - new_mol.getCenter());
     
     return new_mol;
   }
