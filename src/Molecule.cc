@@ -39,8 +39,10 @@ namespace fragdock {
   }
 
   void Molecule::axisRotate(const Vector3d &axis, fltype th) {
+    std::vector<int> id_set = std::vector<int>(atoms.size());
     for(int i = 0; i < atoms.size(); i++)
-      atoms[i].axisRotate(axis, th);
+      id_set[i] = i;
+    axisRotate(axis, th, id_set);
   }
 
   void Molecule::axisRotate(const Vector3d& axis, fltype th, const std::vector<int>& id_set) {
