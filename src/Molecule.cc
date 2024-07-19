@@ -38,10 +38,25 @@ namespace fragdock {
       atoms[i].rotate(vec);
   }
 
+  void Molecule::axisRotate(const Vector3d &axis, fltype th) {
+    std::vector<int> id_set = std::vector<int>(atoms.size());
+    for(int i = 0; i < atoms.size(); i++)
+      id_set[i] = i;
+    axisRotate(axis, th, id_set);
+  }
+
+  void Molecule::axisRotate(const Vector3d& axis, fltype th, const std::vector<int>& id_set) {
+    for(int i = 0; i < id_set.size(); i++)
+      atoms[id_set[i]].axisRotate(axis, th);
+  }
+
   void Molecule::append(const Molecule &o) {
     for(int i = 0; i < o.size(); i++)
       append(o.getAtom(i));
 
+    for(int i = 0; i < o.bonds.size(); i++)
+      append(o.bonds[i]);
+    
     // calcRadius();
   }
 
@@ -239,4 +254,27 @@ namespace fragdock {
     return ret;
   }
 
+  fltype Molecule::calcRMSD(const Molecule& mol) const {
+    // check if the two molecules are the same
+    if (getsmiles() != mol.getsmiles()) {
+      std::cerr << "[Molecule::calcRMSD] different smiles" << std::endl;
+      return HUGE_VAL;
+    }
+
+    // check if the two molecules have the same graph distances
+    if (getGraphDistances() != mol.getGraphDistances()) {
+      std::cerr << "[Molecule::calcRMSD] different graph distances" << std::endl;
+      return HUGE_VAL;
+    }
+
+    // calculate RMSD
+    fltype sd = 0.0;
+    for (int i = 0; i < size(); ++i) {
+      if (getAtom(i).getXSType() != XS_TYPE_H and getAtom(i).getXSType() != XS_TYPE_DUMMY
+          and mol.getAtom(i).getXSType() != XS_TYPE_H and mol.getAtom(i).getXSType() != XS_TYPE_DUMMY) {
+        sd += (getAtom(i) - mol.getAtom(i)).norm();
+      }
+    }
+    return std::sqrt(sd/size());
+  }
 }

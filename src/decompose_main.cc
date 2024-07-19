@@ -39,7 +39,7 @@ namespace {
     options.add_options()
       ("help,h", "show help")
       ("fragment,f", value<std::string>(), "fragment file (.mol2 file)")
-      ("ligand,l", value<std::vector<std::string> >()->multitoken(), "ligand file")
+      ("ligand,l", value<std::vector<std::string> >()->multitoken(), "ligand file (NOT 1D structures!)")
       ("output,o", value<std::string>(), "output (annotated) ligand file (.sdf file)")
       ("log", value<std::string>(), "log file")
       ("capping_atomic_num", value<int>()->default_value(-1), "The atomic number of capping atoms. No capping if it is set to -1")

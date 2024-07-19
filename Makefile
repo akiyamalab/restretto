@@ -45,7 +45,7 @@ _INTRAENERGY_OBJS = intraenergy_main.o Vector3d.o Molecule.o InterEnergyGrid.o E
 _DECOMPOSE_OBJS = decompose_main.o Vector3d.o Molecule.o Fragment.o infile_reader.o utils.o MoleculeToFragments.o Atom.o log_writer_stream.o UnionFindTree.o OBMol.o
 
 # ALL = objs atomgrid-gen conformer-docking atom-docking unittest easytest-docking score-only intraenergy-only
-ALL = atomgrid-gen conformer-docking
+ALL = atomgrid-gen conformer-docking decompose
 
 GRID_OBJS = $(patsubst %,objs/%,$(_GRID_OBJS))
 CONFDOCK_OBJS = $(patsubst %,objs/%,$(_CONFDOCK_OBJS))
