@@ -76,7 +76,10 @@ namespace fragdock {
     Vector3d convert(const Point3d<int>& ind) const { return convert(ind.x, ind.y, ind.z); }
 
     /* Parse an energy grid data */
-    void parse(std::ifstream& ifs);
+    void parseGrid(std::ifstream& ifs);
+
+    /* Parse an energy OpenDX data */
+    void parseDx(std::ifstream& ifs);
 
     /* Parse an energy grid file */
     void parse(const std::string& filename);

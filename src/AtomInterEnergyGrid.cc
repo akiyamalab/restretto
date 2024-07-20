@@ -10,6 +10,21 @@ namespace fragdock {
     }
     return inter_energy_grids;
   }
+
+  std::vector<AtomInterEnergyGrid> AtomInterEnergyGrid::readDxAtomGrids(const std::string& dx_folder){
+    std::vector<AtomInterEnergyGrid> inter_energy_grids(XS_TYPE_SIZE);
+
+    for (int i = 0; i < XS_TYPE_SIZE; i++) {
+      std::string dx_filename = dx_folder + "/" + xs_strings[i] + ".dx";
+      if (std::ifstream(dx_filename).good()) {
+        inter_energy_grids[i] = AtomInterEnergyGrid(dx_filename, i);
+      } else {
+        inter_energy_grids[i] = AtomInterEnergyGrid();
+      }
+    }
+    return inter_energy_grids;
+  }
+
   std::vector<AtomInterEnergyGrid> AtomInterEnergyGrid::makeAtomGrids(const Point3d<fltype>& center,
                                                             const Point3d<fltype>& pitch,
                                                             const Point3d<int>& num,

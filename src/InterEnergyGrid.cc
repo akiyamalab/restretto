@@ -13,7 +13,8 @@ namespace fragdock {
   fltype InterEnergyGrid::getInterEnergy(const Vector3d &pos) const {
     return getInterEnergy(convertX(pos), convertY(pos), convertZ(pos)); // nearest grid point
   }
-  void InterEnergyGrid::parse(std::ifstream& ifs) {
+  
+  void InterEnergyGrid::parseGrid(std::ifstream& ifs) {
     ifs.read(reinterpret_cast<char*>(&center), sizeof(center));
     ifs.read(reinterpret_cast<char*>(&pitch), sizeof(pitch));
     ifs.read(reinterpret_cast<char*>(&num), sizeof(num));
@@ -29,16 +30,81 @@ namespace fragdock {
     }
   }
 
+  void InterEnergyGrid::parseDx(std::ifstream& ifs) {
+    Point3d<fltype> origin;
+    pitch = Point3d<fltype>(0.0, 0.0, 0.0);
+
+    std::string line;
+    while (std::getline(ifs, line)) {
+      std::istringstream iss(line);
+      std::string token;
+      iss >> token;
+
+      if (token == "object") {
+        iss >> token;
+        if (token == "1") {
+          std::string tmp;
+          iss >> tmp >> tmp >> tmp;
+          iss >> num.x >> num.y >> num.z;
+        } else if (token == "3") {
+          break;
+        }
+      } else if (token == "origin") {
+        fltype x, y, z;
+        iss >> x >> y >> z;
+        origin = Point3d<fltype>(x, y, z);
+      } else if (token == "delta") {
+        fltype x, y, z;
+        iss >> x >> y >> z;
+        pitch.x = std::max(pitch.x, x);
+        pitch.y = std::max(pitch.y, y);
+        pitch.z = std::max(pitch.z, z);
+      }
+    }
+    center = origin + pitch * (num-1) / 2;
+    initInterEnergy();
+    for (int x = 0; x < num.x; x++) {
+      for (int y = 0; y < num.y; y++) {
+        for (int z = 0; z < num.z; z++) {
+          fltype val;
+          ifs >> val;
+          setInterEnergy(x, y, z, val);
+        }
+      }
+    }
+  }
+
   void InterEnergyGrid::parse(const std::string& filename) {
     using namespace std;
-    ifstream ifs(filename.c_str(), ios::binary);
-    if(!ifs) {
-      cerr << "InterEnergyGrid::parse() : file could not open. " << filename << endl;
+    ifstream ifs;
+    auto pos = filename.find_last_of(".");
+    if (pos == string::npos) {
+      cerr << "InterEnergyGrid::parse() : unknown file extension. " << filename << endl;
       return;
     }
-    parse(ifs);
-    ifs.close();
+    string extention = filename.substr(pos);
+
+    if (extention == ".grid") {
+      ifs.open(filename.c_str(), ios::binary);
+      if(!ifs) {
+        cerr << "InterEnergyGrid::parse() : file could not open. " << filename << endl;
+        return;
+      }
+      parseGrid(ifs);
+      ifs.close();
+    } else if (extention == ".dx") {
+      ifs.open(filename.c_str());
+      if(!ifs) {
+        cerr << "InterEnergyGrid::parse() : file could not open. " << filename << endl;
+        return;
+      }
+      parseDx(ifs);
+      ifs.close();
+    } else {
+      cerr << "InterEnergyGrid::parse() : unknown file extension. " << filename << endl;
+    }
   }
+
   void InterEnergyGrid::writeFile(std::ofstream& ofs) const {
     ofs.write(reinterpret_cast<const char*>(&center), sizeof(center));
     ofs.write(reinterpret_cast<const char*>(&pitch),  sizeof(pitch) );
