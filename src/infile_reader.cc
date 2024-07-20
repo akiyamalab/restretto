@@ -154,6 +154,9 @@ namespace format {
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         conf.no_local_opt = (str != "false");
       }
+      else if (boost::algorithm::starts_with(buffer, "DXGRID_FOLDER ")) {
+        conf.dxgrid_folder = buffer.substr(14);
+      }
     }
 
     return conf;

@@ -17,7 +17,7 @@ namespace format {
     SearchGrid grid;
     std::vector<std::string> ligand_files;
     std::string receptor_file, output_file;
-    std::string log_file, grid_folder;
+    std::string log_file, grid_folder, dxgrid_folder;
     std::string rotangs_file;
     ReuseStrategy reuse_grid = ReuseStrategy::OFFLINE;
     bool reorder = true;
