@@ -13,9 +13,9 @@
 namespace fragdock {
   struct Bond {
     int atom_id1, atom_id2;
-    bool is_rotor;
+    bool is_rotor, is_in_ring;
     friend std::ostream& operator<< (std::ostream& os, const Bond& bond);
-    Bond(const int atom_id1, const int atom_id2, const bool is_rotor) : atom_id1(atom_id1), atom_id2(atom_id2), is_rotor(is_rotor) {}
+    Bond(const int atom_id1, const int atom_id2, const bool is_rotor, const bool is_in_ring) : atom_id1(atom_id1), atom_id2(atom_id2), is_rotor(is_rotor), is_in_ring(is_in_ring) {}
   };
   class Molecule {
   protected:
