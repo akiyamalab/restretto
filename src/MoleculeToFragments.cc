@@ -72,6 +72,22 @@ namespace {
     return temp_mol;
   }
 
+  bool IsNewRing(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
+    vector<int> atomids_subst_united;
+    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
+    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
+
+    // generate molecules that are united and previous
+    Molecule united_mol = extract_substructure(mol, atomids_subst_united);
+    Molecule prev_mol_a = extract_substructure(mol, atomids_subst_a);
+    Molecule prev_mol_b = extract_substructure(mol, atomids_subst_b);
+
+    int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
+      + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
+    int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
+    return nRings_prev != nRings_united;
+  }
+
   fltype calc_max_angle(const Molecule &mol, int a, int b, const vector<int> & atomids_subst_b) {
     const vector<Atom> &atoms = mol.getAtoms();
     fragdock::Vector3d bond_axis = atoms[b] - atoms[a];
@@ -90,21 +106,8 @@ namespace {
   }
 
   bool IsMergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
-    // try to unite atoms a and b
-    vector<int> atomids_subst_united;
-    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
-    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
-
-    // generate molecules that are united and previous
-    Molecule united_mol = extract_substructure(mol, atomids_subst_united);
-    Molecule prev_mol_a = extract_substructure(mol, atomids_subst_a);
-    Molecule prev_mol_b = extract_substructure(mol, atomids_subst_b);
-
     // avoid new ring generation
-    int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
-      + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
-    int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
-    if (nRings_prev != nRings_united) { // there are new rings
+    if (IsNewRing(mol, atomids_subst_a, atomids_subst_b)) {
       return false;
     }
 
@@ -116,7 +119,7 @@ namespace {
 
       int id1 = mol.getBonds()[j].atom_id1;
       int id2 = mol.getBonds()[j].atom_id2;
-      
+
       fltype max_angle_1, max_angle_2;
       if (exist_in(atomids_subst_a, id1) && exist_in(atomids_subst_b, id2)) {
         // id1 in a, id2 in b
