@@ -72,7 +72,7 @@ namespace {
     return temp_mol;
   }
 
-  bool IsNewRing(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
+  bool has_new_ring(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     vector<int> atomids_subst_united;
     atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
     atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
@@ -105,9 +105,9 @@ namespace {
     return max_angle;
   }
 
-  bool IsMergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
+  bool is_mergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     // avoid new ring generation
-    if (IsNewRing(mol, atomids_subst_a, atomids_subst_b)) {
+    if (has_new_ring(mol, atomids_subst_a, atomids_subst_b)) {
       return false;
     }
 
@@ -218,7 +218,7 @@ namespace fragdock {
         }
       }
 
-      if (IsMergeable(mol, atomids_subst_a, atomids_subst_b)) {
+      if (is_mergeable(mol, atomids_subst_a, atomids_subst_b)) {
         uf.unite(a, b);
         done[a] = true;
         done[b] = true;
