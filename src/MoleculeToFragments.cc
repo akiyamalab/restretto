@@ -72,36 +72,21 @@ namespace {
     return temp_mol;
   }
 
-  Molecule bond_rotate(const Molecule& mol, int bond_id, fltype th) {
+  fltype calc_max_angle(const Molecule &mol, int a, int b, const vector<int> & atomids_subst_b) {
     const vector<Atom> &atoms = mol.getAtoms();
-    const vector<Bond> &bonds = mol.getBonds();
+    fragdock::Vector3d bond_axis = atoms[b] - atoms[a];
+    fltype max_angle = 0.0;
 
-    if (bond_id >= bonds.size()) {
-      std::ostringstream oss;
-      oss << "[Molecule::bondRotate] invarid bond id: " << bond_id << std::endl;
-      oss << "bonds.size() = " << bonds.size() << std::endl;
-      for (int i = 0; i < bonds.size(); ++i) {
-        oss << "BondId:" << i << " " << bonds[i] << std::endl;
-      }
-      throw std::out_of_range(oss.str());
+    for (int j = 0; j < atomids_subst_b.size(); j++) {
+      const Atom &atom_bj = atoms[atomids_subst_b[j]];
+      if (atom_bj.getXSType() == XS_TYPE_H) continue;
+
+      fragdock::Vector3d vec = atom_bj - atoms[a];
+      fltype angle = bond_axis.getAngle(vec);
+      max_angle = max(max_angle, angle);
     }
 
-    // detect the bond is in a ring or not 
-    utils::UnionFindTree uf((int)atoms.size());
-    for (int i=0; i<bonds.size(); i++) {
-      if (i == bond_id) continue;
-      const Bond &bond = bonds[i];
-      uf.unite(bond.atom_id1, bond.atom_id2);
-    }
-    if (uf.getSets()[0].size() == (int)atoms.size()) return mol; // all atoms are connected
-
-    fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
-    Molecule new_mol = mol;
-    new_mol.translate(-atoms[bonds[bond_id].atom_id1]);
-    new_mol.axisRotate(bond_axis, th, uf.getSets()[0]);
-    new_mol.translate(mol.getCenter() - new_mol.getCenter());
-    
-    return new_mol;
+    return max_angle;
   }
 
   bool IsMergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
@@ -123,14 +108,28 @@ namespace {
       return false;
     }
 
-    // internal rotation test
-    // check the rotation invariancy by actually rotated it
-    for (int j = 0; j < united_mol.getBonds().size(); j++) {
-      if (!united_mol.getBonds()[j].is_rotor) {
+    // check the angle invariancy
+    for (int j = 0; j < mol.getBonds().size(); j++) {
+      if (!mol.getBonds()[j].is_rotor) {
         continue;
       }
-      Molecule test_united_mol = bond_rotate(united_mol, j, 1); //1 rad rotation
-      if (united_mol.calcRMSD(test_united_mol) >= 1e-5) {
+
+      int id1 = mol.getBonds()[j].atom_id1;
+      int id2 = mol.getBonds()[j].atom_id2;
+      
+      fltype max_angle_1, max_angle_2;
+      if (exist_in(atomids_subst_a, id1) && exist_in(atomids_subst_b, id2)) {
+        // id1 in a, id2 in b
+        max_angle_1 = calc_max_angle(mol, id1, id2, atomids_subst_b); // id1-id2 vs id1-b
+        max_angle_2 = calc_max_angle(mol, id2, id1, atomids_subst_a); // id2-id1 vs id2-a
+      } else if (exist_in(atomids_subst_a, id2) && exist_in(atomids_subst_b, id1)) {
+        // id2 in a, id1 in b
+        max_angle_1 = calc_max_angle(mol, id2, id1, atomids_subst_b); // id2-id1 vs id2-b
+        max_angle_2 = calc_max_angle(mol, id1, id2, atomids_subst_a); // id1-id2 vs id1-a
+      } else {
+        continue;
+      }
+      if (max_angle_1 > RAD_EPS && max_angle_2 > RAD_EPS) {
         return false;
       }
     }
@@ -199,6 +198,7 @@ namespace fragdock {
       int a = bond.atom_id1;
       int b = bond.atom_id2;
       
+      if (done[a] || done[b]) continue;
       if (atoms[a].getXSType() == XS_TYPE_H || atoms[b].getXSType() == XS_TYPE_H) continue;
       if (uf.same(a, b)) continue;
 
@@ -217,6 +217,8 @@ namespace fragdock {
 
       if (IsMergeable(mol, atomids_subst_a, atomids_subst_b)) {
         uf.unite(a, b);
+        done[a] = true;
+        done[b] = true;
       }
     }
 
