@@ -187,7 +187,7 @@ namespace fragdock {
       assert(vec[dict[a]] > 0 && vec[dict[b]] > 0);
       newbond_ids[vec[dict[a]] - 1].push_back(newbonds.size());
       newbond_ids[vec[dict[b]] - 1].push_back(newbonds.size());
-      newbonds.push_back(Bond(vec[dict[a]] - 1, vec[dict[b]] - 1, bonds[i].is_rotor));
+      newbonds.push_back(Bond(vec[dict[a]] - 1, vec[dict[b]] - 1, bonds[i].is_rotor, bonds[i].is_in_ring));
     }
     for (int i = 0; i < newsz; ++i) {
       newatoms[i].setId(i);
