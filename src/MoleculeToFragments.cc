@@ -88,17 +88,28 @@ namespace {
     return nRings_prev != nRings_united;
   }
 
+  /**
+   * Calculate the angle between three atoms.
+   * @param[in] a Atom a (end)
+   * @param[in] b Atom b (vertex)
+   * @param[in] c Atom c (end)
+   * @return angle between b-a and b-c in radian [0, pi]
+   */
+  fltype calc_angle(const Atom &a, const Atom &b, const Atom &c) {
+    Vector3d vec_ba = a - b;
+    Vector3d vec_bc = c - b;
+
+    return vec_ba.getAngle(vec_bc);
+  }
+
   fltype calc_max_angle(const Molecule &mol, int a, int b, const vector<int> & atomids_subst_b) {
     const vector<Atom> &atoms = mol.getAtoms();
-    fragdock::Vector3d bond_axis = atoms[b] - atoms[a];
     fltype max_angle = 0.0;
 
     for (int j = 0; j < atomids_subst_b.size(); j++) {
       const Atom &atom_bj = atoms[atomids_subst_b[j]];
       if (atom_bj.getXSType() == XS_TYPE_H) continue;
-
-      fragdock::Vector3d vec = atom_bj - atoms[a];
-      fltype angle = bond_axis.getAngle(vec);
+      fltype angle = calc_angle(atoms[b], atoms[a], atom_bj);
       max_angle = max(max_angle, angle);
     }
 
