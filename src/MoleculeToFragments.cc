@@ -53,6 +53,13 @@ namespace {
     return ( c.end() != std::find(c.begin(), c.end(), v) );
   }
 
+  /**
+   * @brief Extract the substructure of the original molecule by the atom IDs.
+   * 
+   * @param mol Molecule (original)
+   * @param id_map Atom IDs of the fragment to be extracted (substructure of the original)
+   * @return Extracted molecule 
+   */
   Molecule extract_substructure(const Molecule& mol, const std::vector<int>& id_map) {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
@@ -72,6 +79,14 @@ namespace {
     return temp_mol;
   }
 
+  /**
+   * @brief Check if the united fragment generate new ring.
+   * 
+   * @param mol Molecule (original)
+   * @param atomids_subst_a Atom IDs of the fragment A (A : substructure of the original)
+   * @param atomids_subst_b Atom IDs of the fragment B (B : substructure of the original)
+   * @return whether the united fragment generate new ring
+   */
   bool has_new_ring(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     vector<int> atomids_subst_united;
     atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
@@ -89,10 +104,11 @@ namespace {
   }
 
   /**
-   * Calculate the angle between three atoms.
-   * @param[in] a Atom a (end)
-   * @param[in] b Atom b (vertex)
-   * @param[in] c Atom c (end)
+   * @brief Calculate the angle between three atoms.
+   * 
+   * @param a Atom a (end)
+   * @param b Atom b (vertex)
+   * @param c Atom c (end)
    * @return angle between b-a and b-c in radian [0, pi]
    */
   fltype calc_angle(const Atom &a, const Atom &b, const Atom &c) {
@@ -102,6 +118,15 @@ namespace {
     return vec_ba.getAngle(vec_bc);
   }
 
+  /**
+   * @brief Check if the two fragments are mergeable. 
+   * @details 1. Avoid new ring generation by merging the two fragments. \n
+   * 2. avoid significant structural change by rotating the bond that connects the two fragments. \n
+   * @param mol Molecule (original)
+   * @param atomids_subst_a Atom IDs of the fragment A (A : substructure of the original)
+   * @param atomids_subst_b Atom IDs of the fragment B (B : substructure of the original)
+   * @return whether the two fragments are mergeable
+   */
   bool is_mergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     // avoid new ring generation
     if (has_new_ring(mol, atomids_subst_a, atomids_subst_b)) {
