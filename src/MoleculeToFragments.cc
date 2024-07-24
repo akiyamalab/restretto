@@ -102,20 +102,6 @@ namespace {
     return vec_ba.getAngle(vec_bc);
   }
 
-  fltype calc_max_angle(const Molecule &mol, int a, int b, const vector<int> & atomids_subst_b) {
-    const vector<Atom> &atoms = mol.getAtoms();
-    fltype max_angle = 0.0;
-
-    for (int j = 0; j < atomids_subst_b.size(); j++) {
-      const Atom &atom_bj = atoms[atomids_subst_b[j]];
-      if (atom_bj.getXSType() == XS_TYPE_H) continue;
-      fltype angle = calc_angle(atoms[b], atoms[a], atom_bj);
-      max_angle = max(max_angle, angle);
-    }
-
-    return max_angle;
-  }
-
   bool is_mergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     // avoid new ring generation
     if (has_new_ring(mol, atomids_subst_a, atomids_subst_b)) {
@@ -124,26 +110,46 @@ namespace {
 
     // check the angle invariancy
     for (int j = 0; j < mol.getBonds().size(); j++) {
-      if (!mol.getBonds()[j].is_rotor) {
+      const Bond &bond = mol.getBonds()[j];
+      if (!bond.is_rotor) {
         continue;
       }
 
-      int id1 = mol.getBonds()[j].atom_id1;
-      int id2 = mol.getBonds()[j].atom_id2;
-
-      fltype max_angle_1, max_angle_2;
-      if (exist_in(atomids_subst_a, id1) && exist_in(atomids_subst_b, id2)) {
-        // id1 in a, id2 in b
-        max_angle_1 = calc_max_angle(mol, id1, id2, atomids_subst_b); // id1-id2 vs id1-b
-        max_angle_2 = calc_max_angle(mol, id2, id1, atomids_subst_a); // id2-id1 vs id2-a
-      } else if (exist_in(atomids_subst_a, id2) && exist_in(atomids_subst_b, id1)) {
-        // id2 in a, id1 in b
-        max_angle_1 = calc_max_angle(mol, id2, id1, atomids_subst_b); // id2-id1 vs id2-b
-        max_angle_2 = calc_max_angle(mol, id1, id2, atomids_subst_a); // id1-id2 vs id1-a
+      // find the bond that connects the two fragments
+      vector<int> id_ab(2); // 0: in subst_a, 1: in subst_b
+      if (exist_in(atomids_subst_a, bond.atom_id1) && exist_in(atomids_subst_b, bond.atom_id2)) {
+        id_ab[0] = bond.atom_id1;
+        id_ab[1] = bond.atom_id2;
+      } else if (exist_in(atomids_subst_a, bond.atom_id2) && exist_in(atomids_subst_b, bond.atom_id1)) {
+        id_ab[0] = bond.atom_id2;
+        id_ab[1] = bond.atom_id1;
       } else {
         continue;
       }
-      if (max_angle_1 > RAD_EPS && max_angle_2 > RAD_EPS) {
+
+      const vector<vector<int> > &atomids_subst_ab = {atomids_subst_a, atomids_subst_b};
+      // i: max angle between the vector id_ab[1-i]-id_ab[i] and id_ab[1-i]-(any)atomids_subst_ab[i]
+      vector<fltype> max_angles_ab(2, 0.0);
+
+      const vector<Atom> &atoms = mol.getAtoms();
+      for (int i = 0; i < 2; i++) {
+        const vector<int> &ids_subst = atomids_subst_ab[i];
+        const int id_same = id_ab[i];
+        const int id_diff = id_ab[1 - i];
+
+        // calculate the angle
+        for (int j = 0; j < ids_subst.size(); j++) {
+          const Atom &atom_subst = atoms[ids_subst[j]];
+          if (atom_subst.getXSType() == XS_TYPE_H) continue;
+
+          const Atom &atom_end = atoms[id_ab[i]];
+          const Atom &atom_vertex = atoms[id_ab[1 - i]];
+          
+          max_angles_ab[i] = max(max_angles_ab[i], calc_angle(atom_end, atom_vertex, atom_subst));
+        }
+      }
+      if (max_angles_ab[0] > RAD_EPS && max_angles_ab[1] > RAD_EPS) {
+        // if rotate the bond, significant structural change occurs
         return false;
       }
     }
