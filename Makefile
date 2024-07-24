@@ -18,6 +18,12 @@ else
 OMPFLAG =
 endif
 
+ifeq ($(STATIC),Y)
+STATICFLAG = -s -lz -static
+else
+STATICFLAG =
+endif
+
 CXXFLAGS += $(OMPFLAG)
 
 ifeq ($(BOOST_INSTALL_PATH),)
@@ -65,28 +71,28 @@ objs:
 	mkdir -p objs/test
 
 atomgrid-gen: $(GRID_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 conformer-docking: $(CONFDOCK_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 atom-docking: $(ATOMDOCK_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 unittest: $(TEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_unit_test_framework -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_unit_test_framework -lopenbabel $(STATICFLAG)
 
 easytest-docking: $(EASYTEST_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 score-only: $(SCOREONLY_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 intraenergy-only: $(INTRAENERGY_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 decompose: $(DECOMPOSE_OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(BOOSTLP) $(OBABELLP) -lboost_regex -lboost_program_options -lopenbabel $(STATICFLAG)
 
 
 objs/%.o: src/%.cc src/%.hpp src/common.hpp
