@@ -237,8 +237,8 @@ namespace fragdock {
 
       if (is_mergeable(mol, atomids_subst_a, atomids_subst_b)) {
         uf.unite(a, b);
-        done[a] = true;
-        done[b] = true;
+        for (int id_a : atomids_subst_a) done[id_a] = true;
+        for (int id_b : atomids_subst_b) done[id_b] = true;
       }
     }
 
