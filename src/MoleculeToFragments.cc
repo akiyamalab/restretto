@@ -80,42 +80,83 @@ namespace {
   }
 
   /**
-   * @brief Check if the united fragment generate new ring.
+   * @brief Rotate the bond that connects the two fragments.
    * 
-   * @param mol Molecule (original)
-   * @param atomids_subst_a Atom IDs of the fragment A (A : substructure of the original)
-   * @param atomids_subst_b Atom IDs of the fragment B (B : substructure of the original)
-   * @return whether the united fragment generate new ring
+   * @param mol Molecule to be rotated
+   * @param bond_id Bond ID that serves as the axis of rotation
+   * @param th Rotation angle in radian
+   * @param rotate_is_id1 Whether fragment is rotated around atom_id1 or atom_id2 (default: true)
+   * @return Rotated molecule
    */
-  bool has_new_ring(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
-    vector<int> atomids_subst_united;
-    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
-    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
+  Molecule bond_rotate(const Molecule& mol, int bond_id, fltype th, bool rotate_is_id1 = true) {
+    const vector<Atom> &atoms = mol.getAtoms();
+    const vector<Bond> &bonds = mol.getBonds();
 
-    // generate molecules that are united and previous
-    Molecule united_mol = extract_substructure(mol, atomids_subst_united);
-    Molecule prev_mol_a = extract_substructure(mol, atomids_subst_a);
-    Molecule prev_mol_b = extract_substructure(mol, atomids_subst_b);
+    if (bond_id >= bonds.size()) {
+      std::ostringstream oss;
+      oss << "[bond_rotate] invarid bond id: " << bond_id << std::endl;
+      oss << "bonds.size() = " << bonds.size() << std::endl;
+      for (int i = 0; i < bonds.size(); ++i) {
+        oss << "BondId:" << i << " " << bonds[i] << std::endl;
+      }
+      throw std::out_of_range(oss.str());
+    }
 
-    int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
-      + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
-    int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
-    return nRings_prev != nRings_united;
+    utils::UnionFindTree uf((int)atoms.size());
+    for (int i=0; i<bonds.size(); i++) {
+      if (i == bond_id) continue;
+      const Bond &bond = bonds[i];
+      uf.unite(bond.atom_id1, bond.atom_id2);
+    }
+    if (uf.getSets()[0].size() == (int)atoms.size()) return mol; // all atoms are connected
+
+    if (uf.getSets().size() != 2) {
+      // molecule should be divided into two fragments
+      throw std::runtime_error("[bond_rotate] invalid union find tree");
+    }
+
+    vector<int> rotate_id_set;
+    if (exist_in(uf.getSets()[0], bonds[bond_id].atom_id1)) {
+      rotate_id_set = rotate_is_id1 ? uf.getSets()[0] : uf.getSets()[1];
+    } else {
+      rotate_id_set = rotate_is_id1 ? uf.getSets()[1] : uf.getSets()[0];
+    }
+
+    fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
+    Molecule new_mol = mol;
+    new_mol.translate(-atoms[bonds[bond_id].atom_id1]);
+    new_mol.axisRotate(bond_axis, th, rotate_id_set);
+    new_mol.translate(mol.getCenter() - new_mol.getCenter());
+    
+    return new_mol;
   }
 
   /**
-   * @brief Calculate the angle between three atoms.
+   * @brief Detect the structural change between the two molecules.
    * 
-   * @param a Atom a (end)
-   * @param b Atom b (vertex)
-   * @param c Atom c (end)
-   * @return angle between b-a and b-c in radian [0, pi]
+   * @param mol Molecule object
+   * @param test_mol Molecule object
+   * @return whether the two molecules have structural change
    */
-  fltype calc_angle(const Atom &a, const Atom &b, const Atom &c) {
-    Vector3d vec_ba = a - b;
-    Vector3d vec_bc = c - b;
+  bool detect_structure_change(const Molecule &mol1, const Molecule &mol2) {
+    if (mol1.size() != mol2.size()) {
+      return true;
+    }
 
-    return vec_ba.getAngle(vec_bc);
+    const vector<Atom> &atoms1 = mol1.getAtoms();
+    const vector<Atom> &atoms2 = mol2.getAtoms();
+    for (int i = 0; i < mol1.size(); i++) {
+      if (atoms1[i].getXSType() != atoms2[i].getXSType()) {
+        return true;
+      }
+
+      Vector3d diff = atoms1[i] - atoms2[i];
+      if (diff.abs() >= 1e-5) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -128,53 +169,36 @@ namespace {
    * @return whether the two fragments are mergeable
    */
   bool is_mergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
-    // avoid new ring generation
-    if (has_new_ring(mol, atomids_subst_a, atomids_subst_b)) {
+    vector<int> atomids_subst_united;
+    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
+    atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
+
+    // generate molecules that are united and previous
+    Molecule united_mol = extract_substructure(mol, atomids_subst_united);
+    Molecule prev_mol_a = extract_substructure(mol, atomids_subst_a);
+    Molecule prev_mol_b = extract_substructure(mol, atomids_subst_b);
+
+    // avoid new ring generation // TODO: IS THIS NECESSARY?
+    int nRings_prev = ringDetector(prev_mol_a.size(), prev_mol_a.getBonds()).size()
+      + ringDetector(prev_mol_b.size(), prev_mol_b.getBonds()).size();
+    int nRings_united = ringDetector(united_mol.size(), united_mol.getBonds()).size();
+    if (nRings_prev != nRings_united) {
+      // the united fragment generate new ring
       return false;
     }
 
-    // check the angle invariancy
-    for (int j = 0; j < mol.getBonds().size(); j++) {
-      const Bond &bond = mol.getBonds()[j];
-      if (!bond.is_rotor) {
+    // internal rotation test
+    // check the rotation invariancy by actually rotated it
+    for (int j = 0; j < united_mol.getBonds().size(); j++) {
+      if (!united_mol.getBonds()[j].is_rotor) {
         continue;
       }
-
-      // find the bond that connects the two fragments
-      vector<int> id_ab(2); // 0: in subst_a, 1: in subst_b
-      if (exist_in(atomids_subst_a, bond.atom_id1) && exist_in(atomids_subst_b, bond.atom_id2)) {
-        id_ab[0] = bond.atom_id1;
-        id_ab[1] = bond.atom_id2;
-      } else if (exist_in(atomids_subst_a, bond.atom_id2) && exist_in(atomids_subst_b, bond.atom_id1)) {
-        id_ab[0] = bond.atom_id2;
-        id_ab[1] = bond.atom_id1;
-      } else {
-        continue;
-      }
-
-      const vector<vector<int> > &atomids_subst_ab = {atomids_subst_a, atomids_subst_b};
-      // i: max angle between the vector id_ab[1-i]-id_ab[i] and id_ab[1-i]-(any)atomids_subst_ab[i]
-      vector<fltype> max_angles_ab(2, 0.0);
-
-      const vector<Atom> &atoms = mol.getAtoms();
-      for (int i = 0; i < 2; i++) {
-        const vector<int> &ids_subst = atomids_subst_ab[i];
-        const int id_same = id_ab[i];
-        const int id_diff = id_ab[1 - i];
-
-        // calculate the angle
-        for (int j = 0; j < ids_subst.size(); j++) {
-          const Atom &atom_subst = atoms[ids_subst[j]];
-          if (atom_subst.getXSType() == XS_TYPE_H) continue;
-
-          const Atom &atom_end = atoms[id_ab[i]];
-          const Atom &atom_vertex = atoms[id_ab[1 - i]];
-          
-          max_angles_ab[i] = max(max_angles_ab[i], calc_angle(atom_end, atom_vertex, atom_subst));
-        }
-      }
-      if (max_angles_ab[0] > RAD_EPS && max_angles_ab[1] > RAD_EPS) {
-        // if rotate the bond, significant structural change occurs
+      // pi rad rotation
+      Molecule rotate1_united_mol = bond_rotate(united_mol, j, M_PI, true); // rotate around atom_id1
+      Molecule rotate2_united_mol = bond_rotate(united_mol, j, M_PI, false); // rotate around atom_id2
+      if (detect_structure_change(united_mol, rotate1_united_mol) and
+          detect_structure_change(united_mol, rotate2_united_mol)) {
+        // significant structural change occurs
         return false;
       }
     }
@@ -216,23 +240,7 @@ namespace fragdock {
       if (atoms[b].getXSType() != XS_TYPE_H)
         h_cnt[a]++;
     }
-    // unite one atom except H
-    vector<bool> done(atoms.size(), false);
-    for (int i = 0; i < bonds.size(); i++) {
-      const Bond &bond = bonds[i];
-      int a = bond.atom_id1;
-      int b = bond.atom_id2;
-      if (atoms[a].getXSType() != XS_TYPE_H and atoms[b].getXSType() != XS_TYPE_H) {
-        for (int _ = 0; _ < 2; _++) {
-          if ((uf.getSize(a) == 1 and h_cnt[a] <= 2 and uf.getSize(b) > 1 and !done[b]) or
-              (uf.getSize(a) == 1 and uf.getSize(b) == 1 and h_cnt[a] <= 2 and h_cnt[b] <= 2)) {
-            uf.unite(a, b);
-            done[a] = true;
-          }
-          swap(a, b);
-        }
-      }
-    }
+    
     // merge solitary atoms except H
     // !!! depends on the order of `bonds` !!!
     for (int i = 0; i < bonds.size(); i++) {
@@ -243,7 +251,6 @@ namespace fragdock {
       int a = bond.atom_id1;
       int b = bond.atom_id2;
       
-      if (done[a] || done[b]) continue;
       if (atoms[a].getXSType() == XS_TYPE_H || atoms[b].getXSType() == XS_TYPE_H) continue;
       if (uf.same(a, b)) continue;
 
@@ -262,8 +269,6 @@ namespace fragdock {
 
       if (is_mergeable(mol, atomids_subst_a, atomids_subst_b)) {
         uf.unite(a, b);
-        for (int id_a : atomids_subst_a) done[id_a] = true;
-        for (int id_b : atomids_subst_b) done[id_b] = true;
       }
     }
 
