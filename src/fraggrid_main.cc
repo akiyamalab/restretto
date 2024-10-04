@@ -50,7 +50,7 @@ namespace {
       ("local-max-rmsd", value<fltype>(), "maximum RMSD for local search")
       ("log", value<std::string>(), "log file")
       ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
-      ("rmsd", value<fltype>(), "rmsd threshold for output poses")
+      ("min-rmsd", value<fltype>(), "minimum RMSD between output poses")
       ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand")
       ("output-score-threshold", value<fltype>(), "output score threshold");
     options_description desc;
@@ -79,7 +79,7 @@ namespace {
     if (vmap.count("local-max-rmsd")) conf.local_max_rmsd = vmap["local-max-rmsd"].as<fltype>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
     if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
-    if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();
+    if (vmap.count("min-rmsd")) conf.pose_min_rmsd = vmap["min-rmsd"].as<fltype>();
     if (vmap.count("no-local-opt")) conf.no_local_opt = true;
     if (vmap.count("poses-per-lig-before-opt")) conf.poses_per_lig_before_opt = vmap["poses-per-lig-before-opt"].as<int64_t>();
     if (vmap.count("output-score-threshold")) conf.output_score_threshold = vmap["output-score-threshold"].as<fltype>();
@@ -525,7 +525,7 @@ int main(int argc, char **argv){
   logs::lout << logs::debug << "config.output_score_threshold : " << config.output_score_threshold << endl;
   logs::lout << logs::debug << "config.poses_per_lig_before_opt : " << config.poses_per_lig_before_opt << endl;
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
-  logs::lout << logs::debug << "config.pose_rmsd     : " << config.pose_rmsd << endl;
+  logs::lout << logs::debug << "config.pose_min_rmsd     : " << config.pose_min_rmsd << endl;
   logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
 
   for (const auto& p : lig_map) { // for each ligand
@@ -562,7 +562,7 @@ int main(int argc, char **argv){
 
     vector<OpenBabel::OBMol> out_pose_mols;
 
-    // select output poses from out_mols with reference to config.pose_rmsd
+    // select output poses from out_mols with reference to config.pose_min_rmsd
     for (int cand = 0; cand < out_mols.size() && out_pose_mols.size() < config.poses_per_lig; ++cand) {
       int lig_ind = out_mols[cand].second.first;
       fltype inter_energy = (out_mols[cand].first - best_intra);
@@ -575,7 +575,7 @@ int main(int argc, char **argv){
       // check RMSD of candidate mol and accepted mols
       fltype min_rmsd = OpenBabel::calc_minRMSD(mol, out_pose_mols);
       // logs::lout << "minimum RMSD : " << min_rmsd << endl;
-      if (min_rmsd > config.pose_rmsd) {
+      if (min_rmsd > config.pose_min_rmsd) {
         OpenBabel::SetProperty(mol, "restretto_score", score);
         out_pose_mols.push_back(mol);
         logs::lout << "  " << out_pose_mols.size() << "th pose's score : " << score << endl;

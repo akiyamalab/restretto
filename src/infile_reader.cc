@@ -143,10 +143,10 @@ namespace format {
         boost::algorithm::trim(str);
         conf.output_score_threshold = boost::lexical_cast<fltype>(str);
       }
-      else if (boost::algorithm::starts_with(buffer, "POSE_RMSD ")) {
-        std::string str = buffer.substr(10);
+      else if (boost::algorithm::starts_with(buffer, "MIN_RMSD ")) {
+        std::string str = buffer.substr(9);
         boost::algorithm::trim(str);
-        conf.pose_rmsd = boost::lexical_cast<fltype>(str);
+        conf.pose_min_rmsd = boost::lexical_cast<fltype>(str);
       }
       else if (boost::algorithm::starts_with(buffer, "NO_LOCAL_OPT ")) {
         std::string str = buffer.substr(13);
