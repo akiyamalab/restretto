@@ -154,6 +154,23 @@ namespace format {
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         conf.no_local_opt = (str != "false");
       }
+      else if (boost::algorithm::starts_with(buffer, "SCORE_ONLY ")) {
+        std::string str = buffer.substr(11);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        conf.score_only = (str != "false");
+      }
+      else if (boost::algorithm::starts_with(buffer, "LOCAL_ONLY ")) {
+        std::string str = buffer.substr(11);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        conf.local_only = (str != "false");
+      }
+      else if (boost::algorithm::starts_with(buffer, "LOCAL_MAX_RMSD ")) {
+        std::string str = buffer.substr(15);
+        boost::algorithm::trim(str);
+        conf.local_max_rmsd = boost::lexical_cast<fltype>(str);
+      }
     }
 
     return conf;
@@ -169,5 +186,8 @@ namespace format {
     const fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / grid.score_pitch) * 2 + 1; // # of grid points per axis
     int FGRID_SIZE = (int)((mem_size * 1024 * 1024) / ((int64_t) num.x * num.y * num.z * sizeof(fltype))); // # of grids that can be stored in memory
     assert(FGRID_SIZE > 0);
+
+    // option conflict check
+    assert(score_only + local_only + no_local_opt <= 1);
   }
 } // namespace format

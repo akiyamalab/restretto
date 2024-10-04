@@ -44,7 +44,10 @@ namespace {
       ("receptor,r", value<std::string>(), "receptor file (.pdb file)")
       ("grid,g", value<std::string>(), "grid folder")
       ("memsize,m", value<int64_t>(), "fragment grid's memory size[MB]")
+      ("score-only", "search space can be omitted")
       ("no-local-opt", "skip local optimization process")
+      ("local-only", "do local search only")
+      ("local-max-rmsd", value<fltype>(), "maximum RMSD for local search")
       ("log", value<std::string>(), "log file")
       ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
       ("rmsd", value<fltype>(), "rmsd threshold for output poses")
@@ -71,6 +74,9 @@ namespace {
     if (vmap.count("output")) conf.output_file = vmap["output"].as<std::string>();
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("memsize")) conf.mem_size = vmap["memsize"].as<int64_t>();
+    if (vmap.count("score-only")) conf.score_only = true;
+    if (vmap.count("local-only")) conf.local_only = true;
+    if (vmap.count("local-max-rmsd")) conf.local_max_rmsd = vmap["local-max-rmsd"].as<fltype>();
     if (vmap.count("log")) conf.log_file = vmap["log"].as<std::string>();
     if (vmap.count("poses-per-lig")) conf.poses_per_lig = vmap["poses-per-lig"].as<int64_t>();
     if (vmap.count("rmsd")) conf.pose_rmsd = vmap["rmsd"].as<fltype>();

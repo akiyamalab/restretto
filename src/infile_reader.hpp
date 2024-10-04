@@ -27,6 +27,9 @@ namespace format {
     fltype output_score_threshold = -3.0;
     fltype pose_rmsd = 0.5;
     bool no_local_opt = false;
+    bool score_only = false;
+    bool local_only = false;
+    fltype local_max_rmsd = -1;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case ReuseStrategy::OFFLINE: return "REUSE_OFFLINE";
