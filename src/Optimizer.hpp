@@ -7,14 +7,17 @@
 namespace fragdock {
   class Optimizer {
     const Molecule& receptor;
+    const fltype max_rmsd;
   public:
-    explicit Optimizer(const Molecule& receptor) : receptor(receptor) {}
+    explicit Optimizer(const Molecule& receptor) : receptor(receptor), max_rmsd(-1.0) {}
+    explicit Optimizer(const Molecule& receptor, fltype max_rmsd) : receptor(receptor), max_rmsd(max_rmsd) {}
     fltype optimize(Molecule &mol, const EnergyCalculator& ec) const;
   };
 
   class Optimizer_Grid {
     const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids;
     // const Molecule& receptor;
+    const fltype max_rmsd;
     fltype calcInterEnergy(const Molecule &mol) const {
       fltype ret = 0.0;
       for (auto& a : mol.getAtoms()) {
@@ -23,7 +26,8 @@ namespace fragdock {
       return ret;
     }
   public:
-    explicit Optimizer_Grid(const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) : atom_grids(atom_grids) {}
+    explicit Optimizer_Grid(const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids) : atom_grids(atom_grids), max_rmsd(-1.0) {}
+    explicit Optimizer_Grid(const std::vector<fragdock::AtomInterEnergyGrid>& atom_grids, fltype max_rmsd) : atom_grids(atom_grids), max_rmsd(max_rmsd) {}
     fltype calcTotalEnergy(const Molecule &mol) const {return calcInterEnergy(mol) + mol.getIntraEnergy();}
     fltype optimize(Molecule &mol) const;
   };

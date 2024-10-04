@@ -515,7 +515,7 @@ int main(int argc, char **argv){
 
   // Optimizer opt(receptor_mol);
   // vector<AtomInterEnergyGrid> opt_atom_grids = AtomInterEnergyGrid::makeAtomGrids(atom_grids[0].getCenter(), atom_grids[0].getPitch(), atom_grids[0].getNum(), receptor_mol, calc);
-  Optimizer_Grid opt_grid(atom_grids);
+  Optimizer_Grid opt_grid(atom_grids, config.local_max_rmsd);
 
   logs::lout << logs::info << "end pre-calculate energy" << endl;
 
@@ -527,6 +527,9 @@ int main(int argc, char **argv){
   logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
   logs::lout << logs::debug << "config.pose_min_rmsd     : " << config.pose_min_rmsd << endl;
   logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
+  if (!config.no_local_opt) {
+    logs::lout << logs::debug << "config.local_max_rmsd : " << ((config.local_max_rmsd < 0) ? "None" : to_string(config.local_max_rmsd)) << endl;
+  }
 
   for (const auto& p : lig_map) { // for each ligand
     const string& identifier = p.first;

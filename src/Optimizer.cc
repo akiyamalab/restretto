@@ -11,6 +11,7 @@ namespace fragdock {
     const int NEAREST_NUM = 200;
     fltype trans_step = 0.5;
     fltype rotate_step = pi / 30.0;
+    Molecule first_mol = mol;
     while(true) {
       fltype next_val = 1e10;
       Molecule next_mol = mol;
@@ -29,6 +30,8 @@ namespace fragdock {
         tmp_mol.rotate(th, phi, psi);
         tmp_mol.translate(center + dv);
         // tmp_mol.translate(dv);
+
+        if (max_rmsd >= 0 && first_mol.calcRMSD(tmp_mol) > max_rmsd) continue;
 
         fltype val = ec.getEnergy(tmp_mol, receptor);
         if(val < next_val) {
@@ -56,6 +59,7 @@ namespace fragdock {
     const int NEAREST_NUM = 200;
     fltype trans_step = 0.5;
     fltype rotate_step = pi / 30.0;
+    Molecule first_mol = mol;
     while(true) {
       fltype next_val = 1e10;
       Molecule next_mol = mol;
@@ -74,6 +78,8 @@ namespace fragdock {
         tmp_mol.rotate(th, phi, psi);
         tmp_mol.translate(center + dv);
         // tmp_mol.translate(dv);
+
+        if (max_rmsd >= 0 && first_mol.calcRMSD(tmp_mol) > max_rmsd) continue;
 
         fltype val = calcInterEnergy(tmp_mol) + mol.getIntraEnergy();
         if(val < next_val) {
