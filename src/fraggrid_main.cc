@@ -274,9 +274,10 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "[TIME STAMP] START MOLECULE OBJECT CONVERSION" << endl;
-  vector<Molecule> ligands_mol = convert_molecules(ligands, config.score_only || config.local_only);
+  bool no_search = config.score_only || config.local_only;
+  vector<Molecule> ligands_mol = convert_molecules(ligands, no_search);
 
-  /* smiles -> an index of a unique ligand list (use if config.score_only || config.local_only) */
+  /* smiles -> an index of a unique ligand list (use if no_search) */
   unordered_map<string, uint> lig_map;
   for (uint l_ind = 0; l_ind < ligs_sz; ++l_ind) {
     Molecule& mol_ligand = ligands_mol[l_ind];
@@ -309,7 +310,7 @@ int main(int argc, char **argv){
   std::chrono::milliseconds fgrid_time(0);
   std::chrono::milliseconds real_time(0);
 
-  if (!config.local_only) {
+  if (!no_search) {
   
     logs::lout << logs::info << "[TIME STAMP] START FRAGMENTATION" << endl;
     fragments_of_ligands = vector<vector<Fragment> >(ligs_sz); /* list of fragments for each ligand */
@@ -512,7 +513,7 @@ int main(int argc, char **argv){
     logs::lout << logs::info << "[TIME STAMP] fgrid_time : " << fgrid_time.count() << endl;
     logs::lout << logs::info << "[TIME STAMP] realcalc_time : " << real_time.count() << endl;
   
-  } // if (!config.local_only)
+  } // if (!no_search)
 
   vector<pair<fltype, string>> ranking;
   ranking.reserve(lig_map.size());
@@ -542,7 +543,7 @@ int main(int argc, char **argv){
     logs::lout << logs::debug << "config.local_max_rmsd : " << ((config.local_max_rmsd < 0) ? "None" : to_string(config.local_max_rmsd)) << endl;
   }
 
-  if (!config.local_only) {
+  if (!no_search) {
 
     outputcsv = ofstream(config.output_file + "fraggrid__" + getDate() + ".csv");
 
@@ -607,14 +608,15 @@ int main(int argc, char **argv){
     }
     outputcsv.close();
 
-  } // if (!config.local_only)
+  } // if (!no_search)
   else {
 
     for (int i = 0; i < ligs_sz; i++) {
       Molecule mol = ligands_mol[i];
       fltype total_energy = opt_grid.calcTotalEnergy(mol);
-      total_energy = opt_grid.optimize(mol);
-
+      if (!config.score_only) {
+        total_energy = opt_grid.optimize(mol);
+      }
       fltype inter_energy = (total_energy - mol.getIntraEnergy());
       fltype score = inter_energy / (1 + 0.05846 * mol.getNrots());
 
@@ -624,10 +626,10 @@ int main(int argc, char **argv){
       outputs.write(obmol);
     }
 
-  }// if (config.local_only)
+  }// if (no_search)
   outputs.close();
 
-  if (!config.local_only) {
+  if (!no_search) {
     assert(ranking.size() == lig_map.size());
     sort(ranking.begin(), ranking.end());
     for (int i = 0; i < lig_map.size(); ++i) {
@@ -638,7 +640,7 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "[TIME STAMP] END OPTIMIZING AND RANKING" << endl;
 
-  if (!config.local_only) logs::lout << "real reduce cost    : " << reduces << endl;
+  if (!no_search) logs::lout << "real reduce cost    : " << reduces << endl;
 
   logs::lout << logs::info << "################ Program end ################" << endl;
 
@@ -664,7 +666,7 @@ int main(int argc, char **argv){
 
 
 
-  if (!config.local_only) {
+  if (!no_search) {
     logs::lout << logs::info << "[FINAL_RESULT] "
         << ligs_sz << "/" << config.getReuseGridString() << "/" << (config.reorder ? "reorder" : "no_reorder") << "/" << config.mem_size << "/" << config.grid.inner_width.x << ", "
         << "fragment types : " << frag_library.size() << ", "
