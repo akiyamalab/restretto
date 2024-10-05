@@ -105,6 +105,9 @@ namespace {
     logs::lout << "Output file name    : "+config.output_file     << std::endl;
     logs::lout << "Grid folder name    : "+config.grid_folder     << std::endl;
     logs::lout << "Memory size[MB]     : "<<config.mem_size       << std::endl;
+    if (config.score_only) logs::lout <<   "[Option] Score only mode" << std::endl;
+    if (config.no_local_opt) logs::lout << "[Option] No local opt mode" << std::endl;
+    if (config.local_only) logs::lout << "[Option] Local only mode" << std::endl;
   }
 
   struct pos_param {
@@ -255,13 +258,15 @@ int main(int argc, char **argv){
   const InterEnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
 
 
+  bool no_search = config.score_only || config.local_only;
+
   // The number how many fragment grids can be stored in memory.
   // It affects reuse of fragment grids.
   int FGRID_SIZE = (int)((config.mem_size * 1024 * 1024) / ((int64_t)score_num.x * score_num.y * score_num.z * sizeof(fltype)));
   if (config.reuse_grid == format::DockingConfiguration::ReuseStrategy::NONE) {
     FGRID_SIZE = 1;
   }
-  logs::lout << logs::info << "fragment grids storage size : " << FGRID_SIZE << endl;
+  if (!no_search) logs::lout << logs::info << "fragment grids storage size : " << FGRID_SIZE << endl;
 
   vector<FragmentsVector> fragvecs(ligs_sz); /* a vector of fragment vectors which correspond to ligands */
   vector<Fragment> frag_library; /* list of unique fragments which poses are normalized*/
@@ -274,7 +279,6 @@ int main(int argc, char **argv){
 
 
   logs::lout << logs::info << "[TIME STAMP] START MOLECULE OBJECT CONVERSION" << endl;
-  bool no_search = config.score_only || config.local_only;
   vector<Molecule> ligands_mol = convert_molecules(ligands, no_search);
 
   /* smiles -> an index of a unique ligand list (use if no_search) */
@@ -531,15 +535,21 @@ int main(int argc, char **argv){
 
   logs::lout << logs::info << "end pre-calculate energy" << endl;
 
-
-  logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
+  if (config.score_only) {
+    logs::lout << logs::info << "[TIME STAMP] START SCORING" << endl;
+  } else if (config.no_local_opt) {
+    logs::lout << logs::info << "[TIME STAMP] START RANKING" << endl;
+  } else {
+    logs::lout << logs::info << "[TIME STAMP] START OPTIMIZING AND RANKING" << endl;
+  }
   
-  logs::lout << logs::debug << "config.output_score_threshold : " << config.output_score_threshold << endl;
-  logs::lout << logs::debug << "config.poses_per_lig_before_opt : " << config.poses_per_lig_before_opt << endl;
-  logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
-  logs::lout << logs::debug << "config.pose_min_rmsd     : " << config.pose_min_rmsd << endl;
-  logs::lout << logs::debug << "config.no_local_opt  : " << (config.no_local_opt ? "True" : "False") << endl;
-  if (!config.no_local_opt) {
+  if (!no_search) {
+    logs::lout << logs::debug << "config.output_score_threshold : " << config.output_score_threshold << endl;
+    logs::lout << logs::debug << "config.poses_per_lig_before_opt : " << config.poses_per_lig_before_opt << endl;
+    logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
+    logs::lout << logs::debug << "config.pose_min_rmsd : " << config.pose_min_rmsd << endl;
+  }
+  if (!config.no_local_opt && !config.score_only) {
     logs::lout << logs::debug << "config.local_max_rmsd : " << ((config.local_max_rmsd < 0) ? "None" : to_string(config.local_max_rmsd)) << endl;
   }
 
@@ -597,7 +607,6 @@ int main(int argc, char **argv){
         if (min_rmsd > config.pose_min_rmsd) {
           OpenBabel::SetProperty(mol, "restretto_score", score);
           out_pose_mols.push_back(mol);
-          logs::lout << "  " << out_pose_mols.size() << "th pose's score : " << score << endl;
         }
       }
 
@@ -638,7 +647,13 @@ int main(int argc, char **argv){
     }
   }
 
-  logs::lout << logs::info << "[TIME STAMP] END OPTIMIZING AND RANKING" << endl;
+  if (config.score_only) {
+    logs::lout << logs::info << "[TIME STAMP] END SCORING" << endl;
+  } else if (config.no_local_opt) {
+    logs::lout << logs::info << "[TIME STAMP] END RANKING" << endl;
+  } else {
+    logs::lout << logs::info << "[TIME STAMP] END OPTIMIZING AND RANKING" << endl;
+  }
 
   if (!no_search) logs::lout << "real reduce cost    : " << reduces << endl;
 
