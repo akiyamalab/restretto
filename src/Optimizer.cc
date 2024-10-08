@@ -31,7 +31,7 @@ namespace fragdock {
         tmp_mol.translate(center + dv);
         // tmp_mol.translate(dv);
 
-        if (max_rmsd >= 0 && first_mol.calcRMSD(tmp_mol) > max_rmsd) continue;
+        if (first_mol.calcRMSD(tmp_mol) > max_rmsd) continue;
 
         fltype val = ec.getEnergy(tmp_mol, receptor);
         if(val < next_val) {
@@ -79,7 +79,7 @@ namespace fragdock {
         tmp_mol.translate(center + dv);
         // tmp_mol.translate(dv);
 
-        if (max_rmsd >= 0 && first_mol.calcRMSD(tmp_mol) > max_rmsd) continue;
+        if (first_mol.calcRMSD(tmp_mol) > max_rmsd) continue;
 
         fltype val = calcInterEnergy(tmp_mol) + mol.getIntraEnergy();
         if(val < next_val) {
