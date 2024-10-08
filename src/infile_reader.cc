@@ -187,7 +187,9 @@ namespace format {
     int FGRID_SIZE = (int)((mem_size * 1024 * 1024) / ((int64_t) num.x * num.y * num.z * sizeof(fltype))); // # of grids that can be stored in memory
     assert(FGRID_SIZE > 0);
 
-    // option conflict check
-    assert(score_only + local_only + no_local_opt <= 1);
+    // option conflict check (do not set at the same time)
+    assert(
+      !( (score_only && local_only) || (score_only && no_local_opt) || (local_only && no_local_opt) )
+    );
   }
 } // namespace format
