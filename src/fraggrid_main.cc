@@ -105,9 +105,9 @@ namespace {
     logs::lout << "Output file name    : "+config.output_file     << std::endl;
     logs::lout << "Grid folder name    : "+config.grid_folder     << std::endl;
     logs::lout << "Memory size[MB]     : "<<config.mem_size       << std::endl;
-    if (config.score_only) logs::lout <<   "[Option] Score only mode" << std::endl;
-    if (config.no_local_opt) logs::lout << "[Option] No local opt mode" << std::endl;
-    if (config.local_only) logs::lout << "[Option] Local only mode" << std::endl;
+    logs::lout << "Score only mode     : "<<(config.score_only?"True":"False") << std::endl;
+    logs::lout << "No local opt mode   : "<<(config.no_local_opt?"True":"False") << std::endl;
+    logs::lout << "Local only mode     : "<<(config.local_only?"True":"False") << std::endl;
   }
 
   struct pos_param {
@@ -549,8 +549,8 @@ int main(int argc, char **argv){
     logs::lout << logs::debug << "config.poses_per_lig : " << config.poses_per_lig << endl;
     logs::lout << logs::debug << "config.pose_min_rmsd : " << config.pose_min_rmsd << endl;
   }
-  if (!config.no_local_opt && !config.score_only) {
-    logs::lout << logs::debug << "config.local_max_rmsd : " << ((config.local_max_rmsd < 0) ? "None" : to_string(config.local_max_rmsd)) << endl;
+  if (!config.no_local_opt || !config.score_only) {
+    logs::lout << logs::debug << "config.local_max_rmsd : " << ((config.local_max_rmsd > 1e8) ? "None" : to_string(config.local_max_rmsd)) << endl;
   }
 
   if (!no_search) {
