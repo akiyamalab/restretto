@@ -188,8 +188,16 @@ namespace format {
     assert(FGRID_SIZE > 0);
 
     // option conflict check (do not set at the same time)
-    assert(
-      !( (score_only && local_only) || (score_only && no_local_opt) || (local_only && no_local_opt) )
-    );
+    if (score_only && local_only) {
+      std::cerr << "Error: 'score-only' and 'local-only' cannot be true at the same time." << std::endl;
+      abort();
+    }
+    if (score_only && no_local_opt) {
+      std::cerr << "Warning: 'score-only' and 'no-local-opt' are both true. This means the same as 'score-only' only." << std::endl;
+    }
+    if (local_only && no_local_opt) {
+      std::cerr << "Warning: 'local-only' and 'no-local-opt' are both true. This may the same as 'score-only'." << std::endl;
+    }
+
   }
 } // namespace format
