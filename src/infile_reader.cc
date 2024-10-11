@@ -96,12 +96,8 @@ namespace format {
         std::string str = buffer.substr(16);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        if (str == "true") {
-          conf.reorder = true;
-        }
-        else if (str == "false") {
-          conf.reorder = false;
-        }
+        if (str == "true") conf.reorder = true;
+        else if (str == "false") conf.reorder = false;
         else {
           std::cerr << "Error: invalid value for REORDER_LIGANDS. It must be either 'true' or 'false'." << std::endl;
           abort();
@@ -161,12 +157,8 @@ namespace format {
         std::string str = buffer.substr(13);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        if (str == "true") {
-          conf.no_local_opt = true;
-        }
-        else if (str == "false") {
-          conf.no_local_opt = false;
-        }
+        if (str == "true") conf.no_local_opt = true;
+        else if (str == "false") conf.no_local_opt = false;
         else {
           std::cerr << "Error: invalid value for NO_LOCAL_OPT. It must be either 'true' or 'false'." << std::endl;
           abort();
@@ -176,12 +168,8 @@ namespace format {
         std::string str = buffer.substr(11);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        if (str == "true") {
-          conf.score_only = true;
-        }
-        else if (str == "false") {
-          conf.score_only = false;
-        }
+        if (str == "true") conf.score_only = true;
+        else if (str == "false") conf.score_only = false;
         else {
           std::cerr << "Error: invalid value for SCORE_ONLY. It must be either 'true' or 'false'." << std::endl;
           abort();
@@ -191,12 +179,8 @@ namespace format {
         std::string str = buffer.substr(11);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        if (str == "true") {
-          conf.local_only = true;
-        }
-        else if (str == "false") {
-          conf.local_only = false;
-        }
+        if (str == "true") conf.local_only = true;
+        else if (str == "false") conf.local_only = false;
         else {
           std::cerr << "Error: invalid value for LOCAL_ONLY. It must be either 'true' or 'false'." << std::endl;
           abort();
