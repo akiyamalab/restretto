@@ -11,7 +11,7 @@ namespace format {
   DockingConfiguration ParseInFile(const char *filename){
     std::ifstream ifs(filename);
     if (ifs.fail()){
-      std::cerr << "opening config file failed: " << filename << std::endl;
+      logs::lerr << logs::error << "opening config file failed: " << filename << std::endl;
       abort();
     }
     DockingConfiguration conf;
@@ -99,7 +99,7 @@ namespace format {
         if (str == "true") conf.reorder = true;
         else if (str == "false") conf.reorder = false;
         else {
-          std::cerr << "Error: invalid value for REORDER_LIGANDS. It must be either 'true' or 'false'." << std::endl;
+          logs::lerr << logs::error << "invalid value for REORDER_LIGANDS. It must be either 'true' or 'false'." << std::endl;
           abort();
         }
       }
@@ -160,7 +160,7 @@ namespace format {
         if (str == "true") conf.no_local_opt = true;
         else if (str == "false") conf.no_local_opt = false;
         else {
-          std::cerr << "Error: invalid value for NO_LOCAL_OPT. It must be either 'true' or 'false'." << std::endl;
+          logs::lerr << logs::error << "Error: invalid value for NO_LOCAL_OPT. It must be either 'true' or 'false'." << std::endl;
           abort();
         }
       }
@@ -171,7 +171,7 @@ namespace format {
         if (str == "true") conf.score_only = true;
         else if (str == "false") conf.score_only = false;
         else {
-          std::cerr << "Error: invalid value for SCORE_ONLY. It must be either 'true' or 'false'." << std::endl;
+          logs::lerr << logs::error << "Error: invalid value for SCORE_ONLY. It must be either 'true' or 'false'." << std::endl;
           abort();
         }
       }
@@ -182,7 +182,7 @@ namespace format {
         if (str == "true") conf.local_only = true;
         else if (str == "false") conf.local_only = false;
         else {
-          std::cerr << "Error: invalid value for LOCAL_ONLY. It must be either 'true' or 'false'." << std::endl;
+          logs::lerr << logs::error << "Error: invalid value for LOCAL_ONLY. It must be either 'true' or 'false'." << std::endl;
           abort();
         }
       }
@@ -209,14 +209,14 @@ namespace format {
 
     // option conflict check (do not set at the same time)
     if (score_only && local_only) {
-      std::cerr << "Error: 'score-only' and 'local-only' cannot be true at the same time." << std::endl;
+      logs::lerr << logs::error << "'score-only' and 'local-only' cannot be true at the same time." << std::endl;
       abort();
     }
     if (score_only && no_local_opt) {
-      std::cerr << "Warning: 'score-only' and 'no-local-opt' are both true. This means the same as 'score-only' only." << std::endl;
+      logs::lerr << logs::warn << "'score-only' and 'no-local-opt' are both true. This means the same as 'score-only' only." << std::endl;
     }
     if (local_only && no_local_opt) {
-      std::cerr << "Warning: 'local-only' and 'no-local-opt' are both true. This may the same as 'score-only'." << std::endl;
+      logs::lerr << logs::warn << "Warning: 'local-only' and 'no-local-opt' are both true. This may the same as 'score-only'." << std::endl;
     }
 
   }
