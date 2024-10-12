@@ -228,7 +228,7 @@ int main(int argc, char **argv){
   if(config.log_file == ""){
     config.log_file = config.output_file + "fraggrid__" + getDate() + ".log";
   }
-  logs::log_init(config.log_file, true);
+  logs::set_file(config.log_file, true);
   logConfig(config);
 
   // parse receptor file

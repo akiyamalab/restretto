@@ -173,7 +173,7 @@ int main(int argc, char** argv){
   if(config.log_file == ""){
     config.log_file = (config.output_file + "__" + utils::getDate() + ".log");
   }
-  logs::log_init(config.log_file, true);
+  logs::set_file(config.log_file, true);
 
   // preparing ligand data
   std::vector<std::vector<int> > mol2frag_list;

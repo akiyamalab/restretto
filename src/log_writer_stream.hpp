@@ -16,11 +16,12 @@ namespace logs{
     LogType(const std::string& type) : type(type) {}
   };
   extern io::filtering_ostream lout;
+  extern io::filtering_ostream lerr;
   extern LogType info;
   extern LogType debug;
   extern LogType warn;
   extern LogType error;
-  void log_init(const std::string& filename, bool verbose = true);
+  void set_file(const std::string& filename, bool verbose = true);
   void close();
   std::ostream& operator<<(std::ostream& os, const LogType& lt);
 }
