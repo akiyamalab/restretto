@@ -11,7 +11,7 @@ namespace format {
   DockingConfiguration ParseInFile(const char *filename){
     std::ifstream ifs(filename);
     if (ifs.fail()){
-      std::cerr << "opening config file failed: " << filename << std::endl;
+      logs::lerr << logs::error << "opening config file failed: " << filename << std::endl;
       abort();
     }
     DockingConfiguration conf;
@@ -96,7 +96,12 @@ namespace format {
         std::string str = buffer.substr(16);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        conf.reorder = (str != "false");
+        if (str == "true") conf.reorder = true;
+        else if (str == "false") conf.reorder = false;
+        else {
+          logs::lerr << logs::error << "invalid value for REORDER_LIGANDS. It must be either 'true' or 'false'." << std::endl;
+          abort();
+        }
       }
       else if (boost::algorithm::starts_with(buffer, "MEMORY_SIZE ")) {
         // fraggrid_main の方でデフォルト値を設定しちゃったから使えないような気がする
@@ -143,16 +148,48 @@ namespace format {
         boost::algorithm::trim(str);
         conf.output_score_threshold = boost::lexical_cast<fltype>(str);
       }
-      else if (boost::algorithm::starts_with(buffer, "POSE_RMSD ")) {
-        std::string str = buffer.substr(10);
+      else if (boost::algorithm::starts_with(buffer, "MIN_RMSD ")) {
+        std::string str = buffer.substr(9);
         boost::algorithm::trim(str);
-        conf.pose_rmsd = boost::lexical_cast<fltype>(str);
+        conf.pose_min_rmsd = boost::lexical_cast<fltype>(str);
       }
       else if (boost::algorithm::starts_with(buffer, "NO_LOCAL_OPT ")) {
         std::string str = buffer.substr(13);
         boost::algorithm::trim(str);
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        conf.no_local_opt = (str != "false");
+        if (str == "true") conf.no_local_opt = true;
+        else if (str == "false") conf.no_local_opt = false;
+        else {
+          logs::lerr << logs::error << "Error: invalid value for NO_LOCAL_OPT. It must be either 'true' or 'false'." << std::endl;
+          abort();
+        }
+      }
+      else if (boost::algorithm::starts_with(buffer, "SCORE_ONLY ")) {
+        std::string str = buffer.substr(11);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        if (str == "true") conf.score_only = true;
+        else if (str == "false") conf.score_only = false;
+        else {
+          logs::lerr << logs::error << "Error: invalid value for SCORE_ONLY. It must be either 'true' or 'false'." << std::endl;
+          abort();
+        }
+      }
+      else if (boost::algorithm::starts_with(buffer, "LOCAL_ONLY ")) {
+        std::string str = buffer.substr(11);
+        boost::algorithm::trim(str);
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        if (str == "true") conf.local_only = true;
+        else if (str == "false") conf.local_only = false;
+        else {
+          logs::lerr << logs::error << "Error: invalid value for LOCAL_ONLY. It must be either 'true' or 'false'." << std::endl;
+          abort();
+        }
+      }
+      else if (boost::algorithm::starts_with(buffer, "LOCAL_MAX_RMSD ")) {
+        std::string str = buffer.substr(15);
+        boost::algorithm::trim(str);
+        conf.local_max_rmsd = boost::lexical_cast<fltype>(str);
       }
     }
 
@@ -169,5 +206,18 @@ namespace format {
     const fragdock::Point3d<int> num = utils::ceili(grid.outer_width / 2 / grid.score_pitch) * 2 + 1; // # of grid points per axis
     int FGRID_SIZE = (int)((mem_size * 1024 * 1024) / ((int64_t) num.x * num.y * num.z * sizeof(fltype))); // # of grids that can be stored in memory
     assert(FGRID_SIZE > 0);
+
+    // option conflict check (do not set at the same time)
+    if (score_only && local_only) {
+      logs::lerr << logs::error << "'score-only' and 'local-only' cannot be true at the same time." << std::endl;
+      abort();
+    }
+    if (score_only && no_local_opt) {
+      logs::lerr << logs::warn << "'score-only' and 'no-local-opt' are both true. This means the same as 'score-only' only." << std::endl;
+    }
+    if (local_only && no_local_opt) {
+      logs::lerr << logs::warn << "Warning: 'local-only' and 'no-local-opt' are both true. This may the same as 'score-only'." << std::endl;
+    }
+
   }
 } // namespace format
