@@ -54,7 +54,7 @@ namespace {
   }
 
   /**
-   * @brief Extract the substructure of the original molecule by the atom IDs.
+   * @brief Extract the substructure (atoms and bonds) of the original molecule by the atom IDs.
    * 
    * @param mol Molecule (original)
    * @param id_map Atom IDs of the fragment to be extracted (substructure of the original)
@@ -84,11 +84,13 @@ namespace {
    * 
    * @param mol Molecule to be rotated
    * @param bond_id Bond ID that serves as the axis of rotation
-   * @param th Rotation angle in radian
-   * @param rotate_is_id1 Whether fragment is rotated around atom_id1 or atom_id2 (default: true)
+   * @param rad Rotation angle in radian
+   * @param rotate_atom1_side Specifies which substructure to rotate around the bond. 
+   *    If set to true, the substructure containing atom_id1 is rotated; 
+   *    otherwise, the substructure containing atom_id2 is rotated. (default: true)
    * @return Rotated molecule
    */
-  Molecule bond_rotate(const Molecule& mol, int bond_id, fltype th, bool rotate_is_id1 = true) {
+  Molecule bond_rotate(const Molecule& mol, int bond_id, fltype rad, bool rotate_atom1_side = true) {
     const vector<Atom> &atoms = mol.getAtoms();
     const vector<Bond> &bonds = mol.getBonds();
 
@@ -117,15 +119,15 @@ namespace {
 
     vector<int> rotate_id_set;
     if (exist_in(uf.getSets()[0], bonds[bond_id].atom_id1)) {
-      rotate_id_set = rotate_is_id1 ? uf.getSets()[0] : uf.getSets()[1];
+      rotate_id_set = rotate_atom1_side ? uf.getSets()[0] : uf.getSets()[1];
     } else {
-      rotate_id_set = rotate_is_id1 ? uf.getSets()[1] : uf.getSets()[0];
+      rotate_id_set = rotate_atom1_side ? uf.getSets()[1] : uf.getSets()[0];
     }
 
     fragdock::Vector3d bond_axis = atoms[bonds[bond_id].atom_id2] - atoms[bonds[bond_id].atom_id1];
     Molecule new_mol = mol;
     new_mol.translate(-atoms[bonds[bond_id].atom_id1]);
-    new_mol.axisRotate(bond_axis, th, rotate_id_set);
+    new_mol.axisRotate(bond_axis, rad, rotate_id_set);
     new_mol.translate(mol.getCenter() - new_mol.getCenter());
     
     return new_mol;
@@ -168,7 +170,7 @@ namespace {
    * @param atomids_subst_b Atom IDs of the fragment B (B : substructure of the original)
    * @return whether the two fragments are mergeable
    */
-  bool is_mergeable(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
+  bool are_different_poses(const Molecule &mol, const vector<int> &atomids_subst_a, const vector<int> &atomids_subst_b) {
     vector<int> atomids_subst_united;
     atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_a.begin(), atomids_subst_a.end());
     atomids_subst_united.insert(atomids_subst_united.end(), atomids_subst_b.begin(), atomids_subst_b.end());
@@ -267,7 +269,7 @@ namespace fragdock {
         }
       }
 
-      if (is_mergeable(mol, atomids_subst_a, atomids_subst_b)) {
+      if (are_different_poses(mol, atomids_subst_a, atomids_subst_b)) {
         uf.unite(a, b);
       }
     }
