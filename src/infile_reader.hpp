@@ -25,8 +25,11 @@ namespace format {
     int64_t poses_per_lig = 1;
     int64_t poses_per_lig_before_opt = 2000;
     fltype output_score_threshold = -3.0;
-    fltype pose_rmsd = 0.5;
+    fltype pose_min_rmsd = 0.5;
     bool no_local_opt = false;
+    bool score_only = false;
+    bool local_only = false;
+    fltype local_max_rmsd = 1e10;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case ReuseStrategy::OFFLINE: return "REUSE_OFFLINE";
