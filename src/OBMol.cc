@@ -45,8 +45,7 @@ namespace {
    *
    * - Carboxyl group oxygen atoms (IsCarboxylOxygen):
    *   If an atom is recognized as a carboxyl oxygen, the bond order is set to 
-   *   2 plus the formal charge of that oxygen atom to avoid misrecognition 
-   *   as a hydroxyl group.
+   *   2 plus the formal charge of that oxygen atom.
    *
    * - Ng+ nitrogen atoms in arginine:
    *   If a nitrogen atom has the type "Ng+", the bond order is set to 2 if its 
@@ -56,14 +55,13 @@ namespace {
    * and hydrogen addition are unset to ensure consistent re-processing if needed.
    *
    * @param mol The molecule (`OpenBabel::OBMol`) whose bond orders are to be corrected.
-   */
+  */
   void fixBondOrders(OpenBabel::OBMol& mol) {
     const std::string type_ngp = "Ng+";
 
     for (int i = 0; i < mol.NumBonds(); ++i) {
       OpenBabel::OBBond* bond = mol.GetBond(i);
       if (bond->GetBeginAtom()->IsCarboxylOxygen() || bond->GetEndAtom()->IsCarboxylOxygen()) {
-        // avoid misrecognition of hydroxyl
         OpenBabel::OBAtom* carboxyl_atom = bond->GetBeginAtom()->IsCarboxylOxygen()
                                             ? bond->GetBeginAtom()
                                             : bond->GetEndAtom();
