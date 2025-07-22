@@ -36,6 +36,58 @@ namespace {
     // else return XS_TYPE_SIZE;
   }
 
+  /**
+   * @brief Corrects bond orders in a molecule for specific functional groups such as 
+   *        carboxyl groups and the Ng+ group of arginine.
+   *
+   * This function adjusts bond orders in the given OpenBabel::OBMol object to fix 
+   * common misassignments made during bond perception:
+   *
+   * - Carboxyl group oxygen atoms (IsCarboxylOxygen):
+   *   If an atom is recognized as a carboxyl oxygen, the bond order is set to 
+   *   2 plus the formal charge of that oxygen atom to avoid misrecognition 
+   *   as a hydroxyl group.
+   *
+   * - Ng+ nitrogen atoms in arginine:
+   *   If a nitrogen atom has the type "Ng+", the bond order is set to 2 if its 
+   *   formal charge is +1, or to 1 if its charge is 0.
+   *
+   * After bond order corrections, flags related to implicit valence perception 
+   * and hydrogen addition are unset to ensure consistent re-processing if needed.
+   *
+   * @param mol The molecule (`OpenBabel::OBMol`) whose bond orders are to be corrected.
+   */
+  void fixBondOrders(OpenBabel::OBMol& mol) {
+    const std::string type_ngp = "Ng+";
+
+    for (int i = 0; i < mol.NumBonds(); ++i) {
+      OpenBabel::OBBond* bond = mol.GetBond(i);
+      if (bond->GetBeginAtom()->IsCarboxylOxygen() || bond->GetEndAtom()->IsCarboxylOxygen()) {
+        // avoid misrecognition of hydroxyl
+        OpenBabel::OBAtom* carboxyl_atom = bond->GetBeginAtom()->IsCarboxylOxygen()
+                                            ? bond->GetBeginAtom()
+                                            : bond->GetEndAtom();
+        bond->SetBondOrder(2 + carboxyl_atom->GetFormalCharge());
+      }
+      else if (type_ngp.compare(bond->GetBeginAtom()->GetType()) == 0 
+              || type_ngp.compare(bond->GetEndAtom()->GetType()) == 0) {
+        // correct bond order for ARG's Ng+ group
+        OpenBabel::OBAtom* nitrogen_atom = (type_ngp.compare(bond->GetBeginAtom()->GetType()) == 0)
+                                            ? bond->GetBeginAtom()
+                                            : bond->GetEndAtom();
+        if (nitrogen_atom->GetFormalCharge() == 1) {
+          bond->SetBondOrder(2);
+        } else if (nitrogen_atom->GetFormalCharge() == 0) {
+          bond->SetBondOrder(1);
+        }
+      }
+    }
+
+    // for ARG's Ng+ correction
+    mol.UnsetImplicitValencePerceived();
+    mol.UnsetHydrogensAdded();
+  }
+
 }
 
 namespace format{
@@ -63,7 +115,7 @@ namespace format{
     std::vector<OpenBabel::OBMol> molecules;
   
     for(bool end_frag = !conv.Read(&mol); end_frag != true; end_frag = !conv.Read(&mol)){
-      OpenBabel::fixBondOrders(mol);
+      fixBondOrders(mol);
       mol.AddPolarHydrogens();
       molecules.push_back(mol);
     }
@@ -293,57 +345,5 @@ namespace OpenBabel{
   }
   void SetProperty(OpenBabel::OBMol& mol, const std::string& key, fltype value){
     SetProperty(mol, key, std::to_string(value));
-  }
-
-  /**
-   * @brief Corrects bond orders in a molecule for specific functional groups such as 
-   *        carboxyl groups and the Ng+ group of arginine.
-   *
-   * This function adjusts bond orders in the given OpenBabel::OBMol object to fix 
-   * common misassignments made during bond perception:
-   *
-   * - Carboxyl group oxygen atoms (IsCarboxylOxygen):
-   *   If an atom is recognized as a carboxyl oxygen, the bond order is set to 
-   *   2 plus the formal charge of that oxygen atom to avoid misrecognition 
-   *   as a hydroxyl group.
-   *
-   * - Ng+ nitrogen atoms in arginine:
-   *   If a nitrogen atom has the type "Ng+", the bond order is set to 2 if its 
-   *   formal charge is +1, or to 1 if its charge is 0.
-   *
-   * After bond order corrections, flags related to implicit valence perception 
-   * and hydrogen addition are unset to ensure consistent re-processing if needed.
-   *
-   * @param mol The molecule (`OpenBabel::OBMol`) whose bond orders are to be corrected.
-   */
-  void fixBondOrders(OpenBabel::OBMol& mol) {
-    const std::string type_ngp = "Ng+";
-
-    for (int i = 0; i < mol.NumBonds(); ++i) {
-      OpenBabel::OBBond* bond = mol.GetBond(i);
-      if (bond->GetBeginAtom()->IsCarboxylOxygen() || bond->GetEndAtom()->IsCarboxylOxygen()) {
-        // avoid misrecognition of hydroxyl
-        OpenBabel::OBAtom* carboxyl_atom = bond->GetBeginAtom()->IsCarboxylOxygen()
-                                            ? bond->GetBeginAtom()
-                                            : bond->GetEndAtom();
-        bond->SetBondOrder(2 + carboxyl_atom->GetFormalCharge());
-      }
-      else if (type_ngp.compare(bond->GetBeginAtom()->GetType()) == 0 
-              || type_ngp.compare(bond->GetEndAtom()->GetType()) == 0) {
-        // correct bond order for ARG's Ng+ group
-        OpenBabel::OBAtom* nitrogen_atom = (type_ngp.compare(bond->GetBeginAtom()->GetType()) == 0)
-                                            ? bond->GetBeginAtom()
-                                            : bond->GetEndAtom();
-        if (nitrogen_atom->GetFormalCharge() == 1) {
-          bond->SetBondOrder(2);
-        } else if (nitrogen_atom->GetFormalCharge() == 0) {
-          bond->SetBondOrder(1);
-        }
-      }
-    }
-
-    // for ARG's Ng+ correction
-    mol.UnsetImplicitValencePerceived();
-    mol.UnsetHydrogensAdded();
   }
 }

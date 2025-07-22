@@ -52,7 +52,6 @@ namespace OpenBabel{
   OpenBabel::OBMol CreateSubMolecule(const OpenBabel::OBMol& reference, const std::vector<int>& atom_ids);
   void SetProperty(OpenBabel::OBMol& mol, const std::string& key, const std::string& value);
   void SetProperty(OpenBabel::OBMol& mol, const std::string& key, fltype value);
-  void fixBondOrders(OpenBabel::OBMol& mol);
 }
 
 #endif
