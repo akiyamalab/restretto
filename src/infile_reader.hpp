@@ -30,6 +30,7 @@ namespace format {
     bool score_only = false;
     bool local_only = false;
     fltype local_max_rmsd = 1e10;
+    fltype rad_scale = 0.95;
     const std::string getReuseGridString() {
       switch (reuse_grid) {
         case ReuseStrategy::OFFLINE: return "REUSE_OFFLINE";
