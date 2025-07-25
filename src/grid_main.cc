@@ -30,7 +30,8 @@ namespace {
     options.add_options()
       ("help,h", "show help")
       ("grid,g", value<std::string>(), "grid folder")
-      ("receptor,r", value<std::string>(), "receptor file (.pdb file)");
+      ("receptor,r", value<std::string>(), "receptor file (.pdb file)")
+      ("rad_scale", value<fltype>(), "scale factor for radius of atoms in grid");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -50,6 +51,7 @@ namespace {
     format::DockingConfiguration conf = format::ParseInFile(vmap["conf-file"].as<std::string>().c_str());
     if (vmap.count("grid")) conf.grid_folder = vmap["grid"].as<std::string>();
     if (vmap.count("receptor")) conf.receptor_file = vmap["receptor"].as<std::string>();
+    if (vmap.count("rad_scale")) conf.rad_scale = vmap["rad_scale"].as<fltype>();
     return conf;
   }
 
@@ -102,7 +104,7 @@ int main(int argc, char **argv){
 
   const format::SearchGrid& grid = conf.grid;
 
-  const fragdock::EnergyCalculator calc(0.95);
+  const fragdock::EnergyCalculator calc(conf.rad_scale);
 
   //Making energyGrid
   #pragma omp parallel for // making energy grids can be parallelized
