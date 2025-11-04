@@ -12,12 +12,14 @@ namespace {
     if      (atom.IsCarbon()   && !atom.GetHeteroValence()) return XS_TYPE_C_H;
     else if (atom.IsCarbon()   &&  atom.GetHeteroValence()) return XS_TYPE_C_P;
     else if (atom.IsNitrogen() && !atom.IsHbondAcceptor() && !atom.IsHbondDonor()) return XS_TYPE_N_P;
-    else if (atom.IsNitrogen() && !atom.IsHbondAcceptor() &&  atom.IsHbondDonor()) return XS_TYPE_N_D;
+    else if (atom.IsNitrogen() && !atom.IsHbondAcceptor() &&  atom.IsHbondDonor() && atom.GetFormalCharge() == 0) return XS_TYPE_N_D;
+    else if (atom.IsNitrogen() &&  atom.IsHbondAcceptor() && !atom.IsHbondDonor() && atom.GetFormalCharge() == 1) return XS_TYPE_N_DC;
     else if (atom.IsNitrogen() &&  atom.IsHbondAcceptor() && !atom.IsHbondDonor()) return XS_TYPE_N_A;
     else if (atom.IsNitrogen() &&  atom.IsHbondAcceptor() &&  atom.IsHbondDonor()) return XS_TYPE_N_DA;
     else if (atom.IsOxygen()   && !atom.IsHbondAcceptor() && !atom.IsHbondDonor()) return XS_TYPE_O_P;
     else if (atom.IsOxygen()   && !atom.IsHbondAcceptor() &&  atom.IsHbondDonor()) return XS_TYPE_O_D;
-    else if (atom.IsOxygen()   &&  atom.IsHbondAcceptor() && !atom.IsHbondDonor()) return XS_TYPE_O_A;
+    else if (atom.IsOxygen()   &&  atom.IsHbondAcceptor() && !atom.IsHbondDonor() && atom.GetFormalCharge() == 0) return XS_TYPE_O_A;
+    else if (atom.IsOxygen()   &&  atom.IsHbondAcceptor() && !atom.IsHbondDonor() && atom.GetFormalCharge() == -1) return XS_TYPE_O_AC;
     else if (atom.IsOxygen()   &&  atom.IsHbondAcceptor() &&  atom.IsHbondDonor()) return XS_TYPE_O_DA;
     else if (atom.IsSulfur())           return XS_TYPE_S_P;
     else if (atom.IsPhosphorus())       return XS_TYPE_P_P;
