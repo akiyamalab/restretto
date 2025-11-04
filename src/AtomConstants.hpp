@@ -11,36 +11,40 @@ const int XS_TYPE_C_H   =  0;
 const int XS_TYPE_C_P   =  1;
 const int XS_TYPE_N_P   =  2;
 const int XS_TYPE_N_D   =  3;
-const int XS_TYPE_N_A   =  4;
-const int XS_TYPE_N_DA  =  5;
-const int XS_TYPE_O_P   =  6;
-const int XS_TYPE_O_D   =  7;
-const int XS_TYPE_O_A   =  8;
-const int XS_TYPE_O_DA  =  9;
-const int XS_TYPE_S_P   = 10;
-const int XS_TYPE_P_P   = 11;
-const int XS_TYPE_F_H   = 12;
-const int XS_TYPE_Cl_H  = 13;
-const int XS_TYPE_Br_H  = 14;
-const int XS_TYPE_I_H   = 15;
-const int XS_TYPE_Met_D = 16;
-const int XS_TYPE_OTHER = 17;
-const int XS_TYPE_DUMMY = 18;
+const int XS_TYPE_N_DC  =  4;
+const int XS_TYPE_N_A   =  5;
+const int XS_TYPE_N_DA  =  6;
+const int XS_TYPE_O_P   =  7;
+const int XS_TYPE_O_D   =  8;
+const int XS_TYPE_O_A   =  9;
+const int XS_TYPE_O_AC  = 10;
+const int XS_TYPE_O_DA  = 11;
+const int XS_TYPE_S_P   = 12;
+const int XS_TYPE_P_P   = 13;
+const int XS_TYPE_F_H   = 14;
+const int XS_TYPE_Cl_H  = 15;
+const int XS_TYPE_Br_H  = 16;
+const int XS_TYPE_I_H   = 17;
+const int XS_TYPE_Met_D = 18;
+const int XS_TYPE_OTHER = 19;
+const int XS_TYPE_DUMMY = 20;
 
-const int XS_TYPE_SIZE  = 19;
+const int XS_TYPE_SIZE  = 21;
 
-const int XS_TYPE_H     = 20;
+const int XS_TYPE_H     = 22;
 
 const std::string xs_strings[] = {
   "C_H",
   "C_P",
   "N_P",
   "N_D",
+  "N_DC",
   "N_A",
   "N_DA",
   "O_P",
   "O_D",
   "O_A",
+  "O_AC",
   "O_DA",
   "S_P",
   "P_P",
@@ -59,11 +63,13 @@ const fltype xs_vdw_radii[] = {
   1.9, // C_P
   1.8, // N_P
   1.8, // N_D
+  1.8, // N_DC
   1.8, // N_A
   1.8, // N_DA
   1.7, // O_P
   1.7, // O_D
   1.7, // O_A
+  1.7, // O_AC
   1.7, // O_DA
   2.0, // S_P
   2.1, // P_P
@@ -104,11 +110,13 @@ inline bool xs_is_acceptor(int xs) {
   return xs == XS_TYPE_N_A ||
          xs == XS_TYPE_N_DA ||
          xs == XS_TYPE_O_A ||
+         xs == XS_TYPE_O_AC ||
          xs == XS_TYPE_O_DA;
 }
 
 inline bool xs_is_donor(int xs) {
   return xs == XS_TYPE_N_D ||
+         xs == XS_TYPE_N_DC ||
          xs == XS_TYPE_N_DA ||
          xs == XS_TYPE_O_D ||
          xs == XS_TYPE_O_DA ||
