@@ -1,4 +1,7 @@
 #include "InterEnergyGrid.hpp"
+#include <openbabel/obconversion.h>
+#include <openbabel/mol.h>
+#include <openbabel/griddata.h>
 // #define TRILINEAR
 
 namespace fragdock {
@@ -30,44 +33,44 @@ namespace fragdock {
     }
   }
 
-  void InterEnergyGrid::parseDx(std::ifstream& ifs) {
-    Point3d<fltype> origin;
-    pitch = Point3d<fltype>(0.0, 0.0, 0.0);
+  void InterEnergyGrid::parseDx(const std::string& filename) {
+    OpenBabel::OBConversion conv;
+    OpenBabel::OBMol mol;
 
-    std::string line;
-    while (std::getline(ifs, line)) {
-      std::istringstream iss(line);
-      std::string token;
-      iss >> token;
-
-      if (token == "object") {
-        iss >> token;
-        if (token == "1") {
-          std::string tmp;
-          iss >> tmp >> tmp >> tmp;
-          iss >> num.x >> num.y >> num.z;
-        } else if (token == "3") {
-          break;
-        }
-      } else if (token == "origin") {
-        fltype x, y, z;
-        iss >> x >> y >> z;
-        origin = Point3d<fltype>(x, y, z);
-      } else if (token == "delta") {
-        fltype x, y, z;
-        iss >> x >> y >> z;
-        pitch.x = std::max(pitch.x, x);
-        pitch.y = std::max(pitch.y, y);
-        pitch.z = std::max(pitch.z, z);
-      }
+    if (!conv.SetInFormat("dx")) {
+      std::cerr << "InterEnergyGrid::parseDx() : could not set OpenDX format." << std::endl;
+      return;
     }
-    center = origin + pitch * (num-1) / 2;
+    if (!conv.ReadFile(&mol, filename)) {
+      std::cerr << "InterEnergyGrid::parseDx() : failed to read file " << filename << std::endl;
+      return;
+    }
+
+    // Some OpenBabel installations expose only non-template GetData() overloads.
+    // Use the typed enum-based lookup and dynamic_cast to obtain OBGridData.
+    OpenBabel::OBGenericData* gd = mol.GetData(OpenBabel::OBGenericDataType::GridData);
+    OpenBabel::OBGridData* grid = nullptr;
+    if (gd) grid = dynamic_cast<OpenBabel::OBGridData*>(gd);
+    if (!grid) {
+      std::cerr << "InterEnergyGrid::parseDx() : no grid data found in file " << filename << std::endl;
+      return;
+    }
+
+    grid->GetNumberOfPoints(num.x, num.y, num.z);
+
+    OpenBabel::vector3 sx, sy, sz;
+    grid->GetAxes(sx, sy, sz);
+    pitch = Point3d<fltype>(sx.GetX(), sy.GetY(), sz.GetZ());
+    
+    OpenBabel::vector3 origin = grid->GetOriginVector();
+    center = Point3d<fltype>(origin.GetX(), origin.GetY(), origin.GetZ()) + pitch * (num - 1) / 2;
+
     initInterEnergy();
+
     for (int x = 0; x < num.x; x++) {
       for (int y = 0; y < num.y; y++) {
         for (int z = 0; z < num.z; z++) {
-          fltype val;
-          ifs >> val;
+          fltype val = grid->GetValue(x, y, z);
           setInterEnergy(x, y, z, val);
         }
       }
@@ -93,13 +96,7 @@ namespace fragdock {
       parseGrid(ifs);
       ifs.close();
     } else if (extention == ".dx") {
-      ifs.open(filename.c_str());
-      if(!ifs) {
-        cerr << "InterEnergyGrid::parse() : file could not open. " << filename << endl;
-        return;
-      }
-      parseDx(ifs);
-      ifs.close();
+      parseDx(filename);
     } else {
       cerr << "InterEnergyGrid::parse() : unknown file extension. " << filename << endl;
     }

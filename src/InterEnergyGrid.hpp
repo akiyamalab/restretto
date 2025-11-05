@@ -79,7 +79,7 @@ namespace fragdock {
     void parseGrid(std::ifstream& ifs);
 
     /* Parse an energy OpenDX data */
-    void parseDx(std::ifstream& ifs);
+    void parseDx(const std::string& filename);
 
     /* Parse an energy grid file */
     void parse(const std::string& filename);
