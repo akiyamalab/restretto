@@ -16,6 +16,17 @@ namespace fragdock {
   fltype InterEnergyGrid::getInterEnergy(const Vector3d &pos) const {
     return getInterEnergy(convertX(pos), convertY(pos), convertZ(pos)); // nearest grid point
   }
+
+  void InterEnergyGrid::parseGrid(const std::string& filename) {
+    using namespace std;
+    ifstream ifs(filename.c_str(), ios::binary);
+    if(!ifs) {
+      cerr << "InterEnergyGrid::parseGrid() : file could not open. " << filename << endl;
+      return;
+    }
+    parseGrid(ifs);
+    ifs.close();
+  }
   
   void InterEnergyGrid::parseGrid(std::ifstream& ifs) {
     ifs.read(reinterpret_cast<char*>(&center), sizeof(center));
@@ -79,7 +90,6 @@ namespace fragdock {
 
   void InterEnergyGrid::parse(const std::string& filename) {
     using namespace std;
-    ifstream ifs;
     auto pos = filename.find_last_of(".");
     if (pos == string::npos) {
       cerr << "InterEnergyGrid::parse() : unknown file extension. " << filename << endl;
@@ -88,13 +98,7 @@ namespace fragdock {
     string extention = filename.substr(pos);
 
     if (extention == ".grid") {
-      ifs.open(filename.c_str(), ios::binary);
-      if(!ifs) {
-        cerr << "InterEnergyGrid::parse() : file could not open. " << filename << endl;
-        return;
-      }
-      parseGrid(ifs);
-      ifs.close();
+      parseGrid(filename);
     } else if (extention == ".dx") {
       parseDx(filename);
     } else {

@@ -75,6 +75,9 @@ namespace fragdock {
     /* convert grid point indices to a 3d coordinate */
     Vector3d convert(const Point3d<int>& ind) const { return convert(ind.x, ind.y, ind.z); }
 
+    /* Parse an energy grid file */
+    void parseGrid(const std::string& filename);
+
     /* Parse an energy grid data */
     void parseGrid(std::ifstream& ifs);
 
