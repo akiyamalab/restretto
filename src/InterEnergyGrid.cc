@@ -22,7 +22,7 @@ namespace fragdock {
     ifstream ifs(filename.c_str(), ios::binary);
     if(!ifs) {
       cerr << "InterEnergyGrid::parseGrid() : file could not open. " << filename << endl;
-      return;
+      abort();
     }
     parseGrid(ifs);
     ifs.close();
@@ -50,11 +50,11 @@ namespace fragdock {
 
     if (!conv.SetInFormat("dx")) {
       std::cerr << "InterEnergyGrid::parseDx() : could not set OpenDX format." << std::endl;
-      return;
+      abort();
     }
     if (!conv.ReadFile(&mol, filename)) {
       std::cerr << "InterEnergyGrid::parseDx() : failed to read file " << filename << std::endl;
-      return;
+      abort();
     }
 
     // Some OpenBabel installations expose only non-template GetData() overloads.
@@ -64,7 +64,7 @@ namespace fragdock {
     if (gd) grid = dynamic_cast<OpenBabel::OBGridData*>(gd);
     if (!grid) {
       std::cerr << "InterEnergyGrid::parseDx() : no grid data found in file " << filename << std::endl;
-      return;
+      abort();
     }
 
     grid->GetNumberOfPoints(num.x, num.y, num.z);
@@ -93,7 +93,7 @@ namespace fragdock {
     auto pos = filename.find_last_of(".");
     if (pos == string::npos) {
       cerr << "InterEnergyGrid::parse() : unknown file extension. " << filename << endl;
-      return;
+      abort();
     }
     string extention = filename.substr(pos);
 
@@ -103,6 +103,7 @@ namespace fragdock {
       parseDx(filename);
     } else {
       cerr << "InterEnergyGrid::parse() : unknown file extension. " << filename << endl;
+      abort();
     }
   }
 
@@ -125,7 +126,7 @@ namespace fragdock {
     ofstream ofs(filename.c_str(), ios::binary);
     if(!ofs){
       cerr << "InterEnergyGrid::WriteFile() : file could not open. " << filename << endl;
-      return ;
+      abort();
     }
     writeFile(ofs);
     ofs.close();
