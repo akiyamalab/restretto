@@ -53,7 +53,7 @@ namespace {
       ("min-rmsd", value<fltype>(), "minimum RMSD between output poses")
       ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand")
       ("output-score-threshold", value<fltype>(), "output score threshold")
-      ("dxgrid", value<std::string>(), "OpenDX grid folder");
+      ("dxgrid", value<std::string>(), "OpenDX grid folder (override .grid files if exists)");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
