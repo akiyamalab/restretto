@@ -261,11 +261,14 @@ int main(int argc, char **argv){
 
   // replace atom grids with dx grids if exists
   if (config.dxgrid_folder != "") {
-    vector<pair<bool, AtomInterEnergyGrid> > atom_dxgrids = AtomInterEnergyGrid::readDxAtomGrids(config.dxgrid_folder);
+    vector<AtomInterEnergyGrid> atom_dxgrids = AtomInterEnergyGrid::readDxAtomGrids(config.dxgrid_folder);
     /* TODO: num, pitch, center should be the same */
+    int j = 0;
     for (int i = 0; i < XS_TYPE_SIZE; i++) {
-      if (atom_dxgrids[i].first) {
-        atom_grids[i] = atom_dxgrids[i].second;
+      if (j >= atom_dxgrids.size()) break;
+      if (atom_dxgrids[j].getXSType() == i) {
+        atom_grids[i] = atom_dxgrids[j];
+        j++;
       }
     }
   }
