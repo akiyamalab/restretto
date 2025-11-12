@@ -20,6 +20,7 @@ namespace fragdock {
     ~AtomInterEnergyGrid() {}
     int getXSType() const { return xs_type; }
     static std::vector<AtomInterEnergyGrid> readAtomGrids(const std::string& grid_folder);
+    static std::vector<AtomInterEnergyGrid> readDxAtomGrids(const std::string& dx_folder);
     static std::vector<AtomInterEnergyGrid> makeAtomGrids(const Point3d<fltype>& center,
                                                      const Point3d<fltype>& pitch,
                                                      const Point3d<int>& num,

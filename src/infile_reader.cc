@@ -191,6 +191,9 @@ namespace format {
         boost::algorithm::trim(str);
         conf.local_max_rmsd = boost::lexical_cast<fltype>(str);
       }
+      else if (boost::algorithm::starts_with(buffer, "DXGRID_FOLDER ")) {
+        conf.dxgrid_folder = buffer.substr(14);
+      }
     }
 
     return conf;

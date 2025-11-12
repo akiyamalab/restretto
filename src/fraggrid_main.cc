@@ -52,7 +52,8 @@ namespace {
       ("poses-per-lig", value<int64_t>(), "Number of output poses per ligand")
       ("min-rmsd", value<fltype>(), "minimum RMSD between output poses")
       ("poses-per-lig-before-opt", value<int64_t>(), "Number of poses to be optimized per ligand")
-      ("output-score-threshold", value<fltype>(), "output score threshold");
+      ("output-score-threshold", value<fltype>(), "output score threshold")
+      ("dxgrid", value<std::string>(), "OpenDX grid folder (override .grid files if exists)");
     options_description desc;
     desc.add(options).add(hidden);
     variables_map vmap;
@@ -83,6 +84,7 @@ namespace {
     if (vmap.count("no-local-opt")) conf.no_local_opt = true;
     if (vmap.count("poses-per-lig-before-opt")) conf.poses_per_lig_before_opt = vmap["poses-per-lig-before-opt"].as<int64_t>();
     if (vmap.count("output-score-threshold")) conf.output_score_threshold = vmap["output-score-threshold"].as<fltype>();
+    if (vmap.count("dxgrid")) conf.dxgrid_folder = vmap["dxgrid"].as<std::string>();
     conf.checkConfigValidity();
     return conf;
   }
@@ -256,6 +258,16 @@ int main(int argc, char **argv){
   const Point3d<fltype>& search_pitch = config.grid.search_pitch;
   const Point3d<int> search_num = utils::ceili(config.grid.inner_width / 2 / search_pitch) * 2 + 1; // # of search grid points (conformer scoring)
   const InterEnergyGrid search_grid(atom_grids[0].getCenter(), search_pitch, search_num);
+
+  // replace atom grids with dx grids if exists
+  if (config.dxgrid_folder != "") {
+    vector<AtomInterEnergyGrid> atom_dxgrids = AtomInterEnergyGrid::readDxAtomGrids(config.dxgrid_folder);
+    /* TODO: num, pitch, center should be the same */
+    for (int i = 0; i < atom_dxgrids.size(); i++) {
+      int xs_type = atom_dxgrids[i].getXSType();
+      atom_grids[xs_type] = atom_dxgrids[i];
+    }
+  }
 
 
   bool no_search = config.score_only || config.local_only;
