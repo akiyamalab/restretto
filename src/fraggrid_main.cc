@@ -263,13 +263,9 @@ int main(int argc, char **argv){
   if (config.dxgrid_folder != "") {
     vector<AtomInterEnergyGrid> atom_dxgrids = AtomInterEnergyGrid::readDxAtomGrids(config.dxgrid_folder);
     /* TODO: num, pitch, center should be the same */
-    int j = 0;
-    for (int i = 0; i < XS_TYPE_SIZE; i++) {
-      if (j >= atom_dxgrids.size()) break;
-      if (atom_dxgrids[j].getXSType() == i) {
-        atom_grids[i] = atom_dxgrids[j];
-        j++;
-      }
+    for (int i = 0; i < atom_dxgrids.size(); i++) {
+      int xs_type = atom_dxgrids[i].getXSType();
+      atom_grids[xs_type] = atom_dxgrids[i];
     }
   }
 
